@@ -7,13 +7,13 @@
 #include <windows.h>
 
 #define MYTYPE unsigned int
-// Pass: bool, complex<float>, complex<doulbe>, double, float, int, unsigned int, short, unsigned short.
-// Error: char, unsigned char(有传入Python，但数据错误)
+// Pass: bool, complex<float>, complex<doulbe>, double, float, int, unsigned int, short, unsigned short, char.
+// Error: unsigned char(初始化数据出错，并不是程序有问题)
 // 3D: not yet
 
 int main()
 {
-	auto _module = ::LoadLibrary(L"C:\\Users\\James\\Documents\\Visual Studio 2015\\Projects\\Demo_Cplus_extend_python\\x64\\Debug\\YapPython_demo.dll");
+	auto _module = ::LoadLibrary(L"D:\\Projects\\Demo_Cplus_extend_python\\x64\\Debug\\YapPythonDll.dll");
 	if (!_module)
 		return 0;
 	using namespace std;
