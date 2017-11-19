@@ -296,6 +296,10 @@ void* YapPython::Process2D(const wchar_t* module_name, const wchar_t* method_nam
 			// convert T* to python list
 			boostpy::list pylist = CArrary2Pylist(data, width, height);
 
+			if (PyList_Size(pylist.ptr()) != width * height)
+				throw PyErr_NewException("reverse data list size != width * height", 
+					pylist.ptr(), main_namespace.ptr());
+
 			boostpy::list retList = boostpy::extract<boostpy::list>(method(pylist, width, height));
 
 			// convert vector to T* out_data: [[..., data, ...], width, height];

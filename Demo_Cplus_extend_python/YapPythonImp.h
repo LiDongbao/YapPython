@@ -18,7 +18,6 @@ namespace boostpy = boost::python;
 
 class YapPython : public IYapPython
 {
-
 public:
 	YapPython();
 	~YapPython();
@@ -59,7 +58,10 @@ protected:
 	template< typename T>
 	std::vector<T> Pylist2Vector(const boostpy::object& iterable);
 
-	template< typename T>
+	template<>
+	std::vector<bool> Pylist2Vector(const boostpy::object& iterable);
+
+	template<typename T>
 	std::list<T> Pylist2list(const boostpy::object& iterable);
 
 	template<typename T>
