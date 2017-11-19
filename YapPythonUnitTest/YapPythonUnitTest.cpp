@@ -1,6 +1,7 @@
 // YapPythonUnitTest.cpp : Defines the entry point for the console application.
 //
 #include "stdafx.h"
+#define BOOST_TEST_MODULE MyUnitTest
 
 #include <boost\test\unit_test.hpp>
 #include "..\Demo_Cplus_extend_python\IYapPython.h"
@@ -11,7 +12,6 @@
 #include <comutil.h>
 #include <atlconv.h>
 
-#define BOOST_TEST_MODULE MyUnitTest
 
 using namespace std;
 
@@ -76,9 +76,9 @@ protected:
 		size_t dwidth, size_t dheight, size_t& out_width, size_t & out_height)
 	{
 		T *p = input_data;
-		for (size_t i = 0; i < dwidth*dheight; ++i)
+		for (size_t i = 0; i < dwidth * dheight; ++i)
 		{
-			*(p++) = T(i);
+			*(p++) = T(static_cast<float>(i));
 		}
 		return python.Process2D(module_name, method_name, data_type_id<T>::type, input_data, dwidth, dheight, out_width, out_height);
 	}
@@ -140,9 +140,11 @@ protected:
 		T *p = input_data;
 		for (size_t i = 0; i < dwidth*dheight*dslice; ++i)
 		{
-			*(p++) = T(i);
+			*(p++) = T(static_cast<float>(i));
 		}
-		return python.Process3D(module_name, method_name, data_type_id<T>::type, input_data, dwidth, dheight, dslice, out_width, out_height, out_slice);
+		return python.Process3D(module_name, method_name, data_type_id<T>::type, 
+			input_data, dwidth, dheight, dslice,
+			out_width, out_height, out_slice);
 	}
 
 	template<typename T>
