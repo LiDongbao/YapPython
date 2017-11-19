@@ -42,7 +42,4 @@
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="D:\Projects\YAP\PluginSDK\BasicRecon\Python\Py2C.py" />
-  </ItemGroup>
 </Project>

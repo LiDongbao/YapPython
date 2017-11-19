@@ -5,7 +5,7 @@
 
 extern "C" {
 	_declspec(dllexport) IYapPython* GetYapPython() {
-		return (new YapPython());
+		return (PythonFactory::GetPython());
 	};
 };
 

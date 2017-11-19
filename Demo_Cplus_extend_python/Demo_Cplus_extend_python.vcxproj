@@ -166,9 +166,6 @@
     </ClCompile>
     <ClCompile Include="YapPythonImp.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="D:\Projects\YAP\PluginSDK\BasicRecon\Python\Py2C.py" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
