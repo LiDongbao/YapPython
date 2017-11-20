@@ -27,7 +27,7 @@
     <ClInclude Include="IYapPython.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="YapPythonImp.h">
+    <ClInclude Include="YapPython.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -35,10 +35,10 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="YapPythonImp.cpp">
+    <ClCompile Include="dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="dllmain.cpp">
+    <ClCompile Include="YapPython.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
