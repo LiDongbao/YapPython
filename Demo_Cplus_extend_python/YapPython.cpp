@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "YapPythonImp.h"
+#include "YapPython.h"
 #include "IYapPython.h"
 
 #ifdef _DEBUG
@@ -37,12 +37,12 @@ std::string ToMbs(const wchar_t * wcs)
 	return std::string(buffer);
 }
 
-class YapPython : public IYapPython
+class YapPythonImpl : public IYapPython
 {
 
 public:
-	YapPython();
-	~YapPython();
+	YapPythonImpl();
+	~YapPythonImpl();
 
 	virtual void* Process2D(const wchar_t* module_name, const wchar_t* method_name, int data_type,
 		void * data, size_t width, size_t height, size_t& out_width, size_t& out_height) override;
@@ -81,14 +81,14 @@ protected:
 	void Pylist2CArray(const boostpy::list& li, T* out_data, size_t length);
 };
 
-YapPython::YapPython()
+YapPythonImpl::YapPythonImpl()
 {
 	Py_Initialize();
 	if (!Py_IsInitialized())
 		throw PyErr_Occurred;
 }
 
-YapPython::~YapPython()
+YapPythonImpl::~YapPythonImpl()
 {
 	if (Py_IsInitialized()) 
 	{
@@ -96,7 +96,7 @@ YapPython::~YapPython()
 	}
 };
 
-void* YapPython::Process2D(const wchar_t* module, const wchar_t* method, int data_type, 
+void* YapPythonImpl::Process2D(const wchar_t* module, const wchar_t* method, int data_type, 
 	void * data, size_t width, size_t height, size_t & out_width, size_t & out_height)
 {
 	switch (data_type)
@@ -128,7 +128,7 @@ void* YapPython::Process2D(const wchar_t* module, const wchar_t* method, int dat
 	}
 }
 
-void* YapPython::Process3D(const wchar_t* module, const wchar_t* method, int data_type,
+void* YapPythonImpl::Process3D(const wchar_t* module, const wchar_t* method, int data_type,
 	void * data, size_t width, size_t height, size_t slice, 
 	size_t& out_width, size_t& out_height, size_t& out_slice)
 {
@@ -174,13 +174,13 @@ void* YapPython::Process3D(const wchar_t* module, const wchar_t* method, int dat
 
 template< typename T>
 std::vector<T>
-YapPython::Pylist2Vector(const boostpy::object& iterable)
+YapPythonImpl::Pylist2Vector(const boostpy::object& iterable)
 {
 	return std::vector<T>(boostpy::stl_input_iterator<T>(iterable),
 		boostpy::stl_input_iterator<T>());
 }
 
-template<> std::vector<bool> YapPython::Pylist2Vector(const boostpy::object& iterable)
+template<> std::vector<bool> YapPythonImpl::Pylist2Vector(const boostpy::object& iterable)
 {
 	std::vector<bool> vector_bool(len(iterable));
 	try
@@ -201,20 +201,20 @@ template<> std::vector<bool> YapPython::Pylist2Vector(const boostpy::object& ite
 
 template< typename T>
 std::list<T>
-YapPython::Pylist2list(const boostpy::object& iterable)
+YapPythonImpl::Pylist2list(const boostpy::object& iterable)
 {
 	return std::list<T>(boostpy::stl_input_iterator<T>(iterable),
 		boostpy::stl_input_iterator<T>());
 }
 
 template<typename T>
-boostpy::list YapPython::Vector2Pylist(const std::vector<T>& v)
+boostpy::list YapPythonImpl::Vector2Pylist(const std::vector<T>& v)
 {
 	return CArray2Pylist(v.data(), v.size());
 }
 
 template<typename T>
-boostpy::list YapPython::List2Pylist(const std::list<T>& v)
+boostpy::list YapPythonImpl::List2Pylist(const std::list<T>& v)
 {
 	boostpy::list li;
 	for (auto element : v)
@@ -224,7 +224,7 @@ boostpy::list YapPython::List2Pylist(const std::list<T>& v)
 }
 
 template<typename T>
-boostpy::list YapPython::CArray2Pylist(const T* data, size_t length)
+boostpy::list YapPythonImpl::CArray2Pylist(const T* data, size_t length)
 {
 	boostpy::list li;
 	for (auto p = data; p < data + length; ++p)
@@ -236,11 +236,8 @@ boostpy::list YapPython::CArray2Pylist(const T* data, size_t length)
 }
 
 template<typename T>
-void YapPython::Pylist2CArray(const boostpy::list& li, T* out_data, size_t length)
+void YapPythonImpl::Pylist2CArray(const boostpy::list& li, T* out_data, size_t length)
 {
-	if (PyList_Size(li.ptr()) != length)
-		throw PyErr_NewException("Python return data list size != return list marked size", li.ptr(), NULL);
-
 	T* p = out_data;
 	for (size_t i = 0; i < length; ++i)
 	{
@@ -249,7 +246,7 @@ void YapPython::Pylist2CArray(const boostpy::list& li, T* out_data, size_t lengt
 }
 
 template <>
-void YapPython::Pylist2CArray(const boostpy::list& li, complex<double>* out_data, size_t length)
+void YapPythonImpl::Pylist2CArray(const boostpy::list& li, complex<double>* out_data, size_t length)
 {
 	Py_complex s;
 	for (size_t i = 0; i < length; ++i)
@@ -261,7 +258,7 @@ void YapPython::Pylist2CArray(const boostpy::list& li, complex<double>* out_data
 }
 
 template <>
-void YapPython::Pylist2CArray(const boostpy::list& li, complex<float>* out_data, size_t length)
+void YapPythonImpl::Pylist2CArray(const boostpy::list& li, complex<float>* out_data, size_t length)
 {
 	Py_complex s;
 	for (size_t i = 0; i < length; ++i)
@@ -273,7 +270,7 @@ void YapPython::Pylist2CArray(const boostpy::list& li, complex<float>* out_data,
 }
 
 template<typename T>
-void* YapPython::DoProcess2D(const wchar_t* module_name, const wchar_t* method_name,
+void* YapPythonImpl::DoProcess2D(const wchar_t* module_name, const wchar_t* method_name,
 	T* data, size_t width, size_t height, 
 	size_t& out_width, size_t& out_height)
 {
@@ -290,25 +287,28 @@ void* YapPython::DoProcess2D(const wchar_t* module_name, const wchar_t* method_n
 		boostpy::object method = main_namespace[ToMbs(method_name).c_str()];
 
 		// convert T* to python list
-		boostpy::list pylist = CArray2Pylist(data, width * height);
+		boostpy::list input_pylist = CArray2Pylist(data, width * height);
 
-		boostpy::list retList = boostpy::extract<boostpy::list>(method(pylist, width, height));
+		boostpy::list return_list = boostpy::extract<boostpy::list>(method(input_pylist, width, height));
 
 		// convert vector to T* out_data: [[..., data, ...], width, height];
-		boostpy::list datalist = boostpy::extract<boostpy::list>(retList[0]);
-		if (PyList_Check(datalist.ptr()) && PyList_Size(retList.ptr())==3)
+		boostpy::list data_list = boostpy::extract<boostpy::list>(return_list[0]);
+		if (PyList_Check(data_list.ptr()) && PyList_Size(return_list.ptr())==3)
 		{
-			out_width = boostpy::extract<size_t>(retList[1]);
-			out_height = boostpy::extract<size_t>(retList[2]);
+			out_width = boostpy::extract<size_t>(return_list[1]);
+			out_height = boostpy::extract<size_t>(return_list[2]);
+			if (PyList_Size(data_list.ptr()) != out_width * out_height * out_slice)
+				throw PyErr_NewException("Python return data list size != return list marked size", 
+					data_list.ptr(), main_namespace.ptr());
+
 			T* output_data = new T[out_width * out_height];
-			Pylist2CArray(datalist, output_data, out_width * out_height);
+			Pylist2CArray(data_list, output_data, out_width * out_height);
 			return reinterpret_cast<void*>(output_data);
 		}
 		else
 		{
-			// PyErr_SetString(datalist.ptr(), "Return value[0] is not a data list. Check python script return value!");
 			throw PyErr_NewException("Return value[0] is not a data list. Check python script return value!", 
-				datalist.ptr(), main_namespace.ptr());
+				data_list.ptr(), main_namespace.ptr());
 		}
 	}
 	catch (...)
@@ -321,7 +321,7 @@ void* YapPython::DoProcess2D(const wchar_t* module_name, const wchar_t* method_n
 };
 
 template<typename T>
-void* YapPython::DoProcess3D(const wchar_t* module_name, const wchar_t * method_name,
+void* YapPythonImpl::DoProcess3D(const wchar_t* module_name, const wchar_t * method_name,
 	T * data, size_t width, size_t height, size_t slice, 
 	size_t& out_width, size_t& out_height, size_t& out_slice)
 {
@@ -349,6 +349,8 @@ void* YapPython::DoProcess3D(const wchar_t* module_name, const wchar_t * method_
 			out_width = boostpy::extract<size_t>(retList[1]);
 			out_height = boostpy::extract<size_t>(retList[2]);
 			out_slice = boostpy::extract<size_t>(retList[3]);
+			if (PyList_Size(datalist.ptr()) != out_width * out_height * out_slice)
+				throw PyErr_NewException("Python return data list size != return list marked size", datalist.ptr(), main_namespace.ptr());
 
 			T* output_data = new T[out_width * out_height * out_slice];
 			Pylist2CArray(datalist, output_data, out_width * out_height * out_slice);
@@ -357,7 +359,6 @@ void* YapPython::DoProcess3D(const wchar_t* module_name, const wchar_t * method_
 		}
 		else
 		{
-			// PyErr_SetString(datalist.ptr(), "Return value[0] is not a data list. Check python script return value!");
 			throw PyErr_NewException("Return value[0] is not a data list. Check python script return value!", datalist.ptr(), main_namespace.ptr());
 		}
 	}
@@ -372,5 +373,5 @@ void* YapPython::DoProcess3D(const wchar_t* module_name, const wchar_t * method_
 
 IYapPython * PythonFactory::GetPython()
 {
-	return new YapPython();
+	return new YapPythonImpl();
 }

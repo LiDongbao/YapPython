@@ -13,22 +13,39 @@
 using namespace std;
 
 template<typename MYTYPE>
-void Test2D(
-	IYapPython* python, 
-	const wchar_t * module_name, 
-	const wchar_t * method_name, 
-	size_t dwidth, 
-	size_t dheight,
-	OUT size_t& out_width,
-	OUT size_t& out_height)
+void buidData(size_t image_size, MYTYPE* data)
 {
-	size_t image_size2d = dheight * dwidth;
-	MYTYPE* data = new MYTYPE[image_size2d], *p = data;//  *out_data = new MYTYPE[image_size2d];
-	for (int i = 0; i < image_size2d; ++i)
+	for (int i = 0; i < image_size; ++i)
 	{
-		*(p++) = MYTYPE(i); //int(i/image_size2d * 127)
+		data[i] = MYTYPE(i);
 	}
+}
 
+template<> void buidData(size_t image_size, char * data)
+{
+	for (int i = 0; i < image_size; ++i)
+	{
+		data[i] = char(int(i%127));
+	}
+}
+
+template<> void buidData(size_t image_size, unsigned char * data)
+{
+	for (int i = 0; i < image_size; ++i)
+	{
+		data[i] = char(int(i % 127));
+	}
+}
+
+template<typename MYTYPE>
+void Test(IYapPython* python, const wchar_t * module_name, 
+	const wchar_t * method_name, size_t dwidth, size_t dheight, size_t dslice = 1)
+{
+	size_t out_width = 0, out_height = 0, out_slice = 0;
+	size_t image_size = dheight * dwidth * dslice;
+	MYTYPE* data = new MYTYPE[image_size];
+	buidData(image_size, data);
+	
 	MYTYPE* output_data = reinterpret_cast<MYTYPE*>(
 		python->Process2D(module_name, method_name,
 			data_type_id<MYTYPE>::type, data, dwidth, dheight, out_width, out_height));
@@ -37,8 +54,8 @@ void Test2D(
 	delete[]output_data;
 }
 
-// Pass: bool, complex<float>, complex<doulbe>, double, float, int, unsigned int, short, unsigned short, char.
-// Error: unsigned char(初始化数据出错，并不是程序有问题)
+// Pass: bool, complex<float>, complex<doulbe>, double, float, int, unsigned int, short, unsigned short, unsigned char.
+// Error: char(in python )
 // 3D: not yet
 
 int main()
@@ -59,26 +76,17 @@ int main()
 	
 	IYapPython* python = get_yap_python_func();
 
-	size_t out_width = 0, out_height = 0, out_slice = 0;
-
-	const wchar_t * class_name = L"Py4C";
-	const wchar_t * myfunction = L"ShowImage3D";
-	const wchar_t * complex_method_name = L"ShowComplexImage";
-	const wchar_t * char_method_name = L"ShowCharImage";
-
-	Test2D<unsigned int>(python, L"..\\PythonScripts\\Py2C.py", L"ShowImage", 128, 256, out_width, out_height);
-
-	// Test2D<unsigned int>(python, L"..\\PythonScripts\\Py2C.py", L"ShowImage", 256, 128, out_width, out_height);
-	// Test2D<complex<float>>(python, L"..\\PythonScripts\\Py2C.py", L"ShowImage", 256, 128, out_width, out_height);
-	// Test2D<complex<double>>(python, L"..\\PythonScripts\\Py2C.py", L"ShowImage", 256, 128, out_width, out_height);
-	// Test2D<char>(python, L"..\\PythonScripts\\Py2C.py", L"ShowImage", 256, 128, out_width, out_height);
-	// Test2D<unsigned char>(python, L"..\\PythonScripts\\Py2C.py", L"ShowImage", 256, 128, out_width, out_height);
-	// Test2D<int>(python, L"..\\PythonScripts\\Py2C.py", L"ShowImage", 256, 128, out_width, out_height);
-	// Test2D<unsigned int>(python, L"..\\PythonScripts\\Py2C.py", L"ShowImage", 256, 128, out_width, out_height);
-	// Test2D<float>(python, L"..\\PythonScripts\\Py2C.py", L"ShowImage", 256, 128, out_width, out_height);
-	// Test2D<double>(python, L"..\\PythonScripts\\Py2C.py", L"ShowImage", 256, 128, out_width, out_height);
-	// Test2D<short>(python, L"..\\PythonScripts\\Py2C.py", L"ShowImage", 256, 128, out_width, out_height);
-	// Test2D<unsigned short>(python, L"..\\PythonScripts\\Py2C.py", L"ShowImage", 256, 128, out_width, out_height);
+	Test<unsigned int>(python, L"..\\PythonScripts\\Py2C.py", L"ShowImage", 256, 128);
+	// Test<complex<float>>(python, L"..\\PythonScripts\\Py2C.py", L"ShowImage", 256, 128);
+	// Test<complex<double>>(python, L"..\\PythonScripts\\Py2C.py", L"ShowImage", 256, 128);
+	// Test<char>(python, L"..\\PythonScripts\\Py2C.py", L"ShowImage", 256, 128); // Error
+	// Test<unsigned char>(python, L"..\\PythonScripts\\Py2C.py", L"ShowImage", 256, 128);
+	// Test<int>(python, L"..\\PythonScripts\\Py2C.py", L"ShowImage", 256, 128);
+	// Test<unsigned int>(python, L"..\\PythonScripts\\Py2C.py", L"ShowImage", 256, 128);
+	// Test<float>(python, L"..\\PythonScripts\\Py2C.py", L"ShowImage", 256, 128);
+	// Test<double>(python, L"..\\PythonScripts\\Py2C.py", L"ShowImage", 256, 128);
+	// Test<short>(python, L"..\\PythonScripts\\Py2C.py", L"ShowImage", 256, 128);
+	// Test<unsigned short>(python, L"..\\PythonScripts\\Py2C.py", L"ShowImage", 256, 128);
 
 	system("pause");
 

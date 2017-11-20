@@ -72,20 +72,23 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <LibraryPath>C:\Program Files\Python36\libs;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(PYTHON_ROOT)\libs;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(PYTHON_ROOT)\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Program Files\Python36\include;C:\Program Files\Python36\Lib\site-packages\numpy\core\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Program Files\Python36\libs;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(Python_Root)\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(Python_Root)\libs;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(PYTHON_ROOT)\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(PYTHON_ROOT)\libs;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\Program Files\Python36\include;C:\Program Files\Python36\Lib\site-packages\numpy\core\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Program Files\Python36\libs;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(PYTHON_ROOT)\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(Python_Root)\libs;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
