@@ -1,7 +1,7 @@
 // dllmain.cpp
 
 #include "stdafx.h"
-#include "YapPythonImp.h"
+#include "YapPython.h"
 
 extern "C" {
 	_declspec(dllexport) IYapPython* GetYapPython() {

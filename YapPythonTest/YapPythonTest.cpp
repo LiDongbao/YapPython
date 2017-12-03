@@ -5,6 +5,7 @@
 #include <iostream>
 #include "..\Demo_Cplus_extend_python\IYapPython.h"
 #include <windows.h>
+#include "..\ReadFolderAllFiles\NiiReader.h"
 
 #ifndef OUT
 #define OUT
@@ -76,7 +77,28 @@ int main()
 	
 	IYapPython* python = get_yap_python_func();
 
-	Test<unsigned int>(python, L"..\\PythonScripts\\Py2C.py", L"ShowImage", 256, 128);
+	auto _module1 = ::LoadLibrary(L"..\\x64\\Debug\\ReadFolderAllFiles.dll");
+	if (!_module1)
+		return 0;
+	auto get_func = (INiiReader*(*)())::GetProcAddress(_module1, "GetNiiData");
+	if (!get_func)
+		return 0;
+	auto nii_reader = get_func();
+
+	auto data = nii_reader->ReadFile(L"D:\\test_data\\003_t2_tse_sag.nii");
+
+	auto dimensions = nii_reader->GetDimensions();
+	size_t width = dimensions[0];
+	size_t height = dimensions[1];
+	size_t out_width = 0, out_height = 0;
+	python->Process2D(L"..\\PythonScripts\\Py2C.py", L"ShowImage", 
+		DataTypeUnsignedShort, data, width, height, out_width, out_height);
+
+
+
+
+
+	// Test<unsigned int>(python, L"..\\PythonScripts\\Py2C.py", L"ShowImage", 256, 128);
 	// Test<complex<float>>(python, L"..\\PythonScripts\\Py2C.py", L"ShowImage", 256, 128);
 	// Test<complex<double>>(python, L"..\\PythonScripts\\Py2C.py", L"ShowImage", 256, 128);
 	// Test<char>(python, L"..\\PythonScripts\\Py2C.py", L"ShowImage", 256, 128); // Error

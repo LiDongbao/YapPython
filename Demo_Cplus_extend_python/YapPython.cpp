@@ -297,12 +297,14 @@ void* YapPythonImpl::DoProcess2D(const wchar_t* module_name, const wchar_t* meth
 		{
 			out_width = boostpy::extract<size_t>(return_list[1]);
 			out_height = boostpy::extract<size_t>(return_list[2]);
-			if (PyList_Size(data_list.ptr()) != out_width * out_height * out_slice)
+
+			if (PyList_Size(data_list.ptr()) != out_width * out_height)
 				throw PyErr_NewException("Python return data list size != return list marked size", 
 					data_list.ptr(), main_namespace.ptr());
 
 			T* output_data = new T[out_width * out_height];
 			Pylist2CArray(data_list, output_data, out_width * out_height);
+
 			return reinterpret_cast<void*>(output_data);
 		}
 		else
