@@ -391,7 +391,7 @@ void YapPythonImpl::Pylist3D2CArray(const boostpy::list& li, T* out_data, size_t
 		{
 			for (size_t j = 0; j < width; ++j)
 			{
-				*(p++) = boostpy::extract<T>(li[k][i][j][k]);
+				*(p++) = boostpy::extract<T>(li[k][i][j]);
 			}
 		}
 	}
@@ -466,7 +466,7 @@ void YapPythonImpl::Pylist4D2CArray(const boostpy::list& li, T* out_data, size_t
 			{
 				for (size_t j = 0; j < width; ++j)
 				{
-					*(p++) = boostpy::extract<T>(li[k][i][j][k][l]);
+					*(p++) = boostpy::extract<T>(li[l][k][i][j]);
 				}
 			}
 		}
@@ -584,8 +584,10 @@ void* YapPythonImpl::DoProcess3D(const wchar_t* module_name, const wchar_t * met
 			out_width = boostpy::extract<size_t>(return_List[1]);
 			out_height = boostpy::extract<size_t>(return_List[2]);
 			out_slice = boostpy::extract<size_t>(return_List[3]);
+			/*
 			if (PyList_Size(data_matrix_list.ptr()) != out_width * out_height * out_slice)
 				throw PyErr_NewException("Python return data list size != return list marked size", data_matrix_list.ptr(), main_namespace.ptr());
+			*/
 
 			T* output_data = new T[out_width * out_height * out_slice];
 			Pylist3D2CArray(data_matrix_list, output_data, out_width, out_height, out_slice);
@@ -594,7 +596,8 @@ void* YapPythonImpl::DoProcess3D(const wchar_t* module_name, const wchar_t * met
 		}
 		else
 		{
-			throw PyErr_NewException("Return value[0] is not a data list. Check python script return value!", data_matrix_list.ptr(), main_namespace.ptr());
+			throw PyErr_NewException("Return value[0] is not a data list. Check python script return value!", 
+				main_namespace.ptr(), main_namespace.ptr());
 		}
 	}
 	catch (...)
@@ -637,14 +640,15 @@ void* YapPythonImpl::DoProcess4D(const wchar_t* module_name, const wchar_t * met
 			out_slice = boostpy::extract<size_t>(return_List[3]);
 			out_time = boostpy::extract<size_t>(return_List[4]);
 
-			T* output_data = new T[out_width * out_height * out_slice];
+			T* output_data = new T[out_width * out_height * out_slice * out_time];
 			Pylist4D2CArray(data_matrix_list, output_data, out_width, out_height, out_slice, out_time);
 
 			return reinterpret_cast<void*>(output_data);
 		}
 		else
 		{
-			throw PyErr_NewException("Return value[0] is not a data list. Check python script return value!", data_matrix_list.ptr(), main_namespace.ptr());
+			throw PyErr_NewException("Return value[0] is not a data list. Check python script return value!", 
+				main_namespace.ptr(), main_namespace.ptr());
 		}
 	}
 	catch (...)

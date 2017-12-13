@@ -55,30 +55,30 @@ void Test(IYapPython* python, const wchar_t * module_name,
 	delete[]output_data;
 }
 
-int LoadDll()
+void LoadDll()
 {
 	auto _module = ::LoadLibrary(L"..\\x64\\Debug\\YapPythonDll.dll");
 	if (!_module)
 	{
 		std::cout << "Error loading YapPythonDll.dll.\n";
-		return 0;
+		return ;
 	}
 
 	auto get_yap_python_func = (IYapPython*(*)())::GetProcAddress(_module, "GetYapPython");
 	if (get_yap_python_func == nullptr)
 	{
 		std::cout << "Cannot find GetYapPython() in YapPythonDLL.dll.\n";
-		return 0;
+		return ;
 	}
 
 	IYapPython* python = get_yap_python_func();
 
 	auto _module1 = ::LoadLibrary(L"..\\x64\\Debug\\ReadFolderAllFiles.dll");
 	if (!_module1)
-		return 0;
+		return ;
 	auto get_func = (INiiReader*(*)())::GetProcAddress(_module1, "GetNiiData");
 	if (!get_func)
-		return 0;
+		return ;
 	auto nii_reader = get_func();
 
 	auto data = nii_reader->ReadFile(L"D:\\test_data\\003_t2_tse_sag.nii");
@@ -92,9 +92,10 @@ int LoadDll()
 		DataTypeUnsignedShort, data, width, height, out_width, out_height);
 	auto out_data_3d = python->Process3D(L"..\\PythonScripts\\Py2C.py", L"ShowImage3d",
 		DataTypeUnsignedShort, data, width, height, slice, out_width, out_height, out_slice);
-	cout << out_width << out_height << out_slice << endl;
+	cout << out_width << "\t" << out_height << "\t" << out_slice << endl;
 	// Feed("output",out_data.get());
-	return 1;
+	delete data;
+	return ;
 }
 
 // Pass: bool, complex<float>, complex<doulbe>, double, float, int, unsigned int, short, unsigned short, unsigned char.
@@ -103,7 +104,7 @@ int LoadDll()
 
 int main()
 {
-	return LoadDll();
+	LoadDll();
 
 	// Test<unsigned int>(python, L"..\\PythonScripts\\Py2C.py", L"ShowImage", 256, 128);
 	// Test<complex<float>>(python, L"..\\PythonScripts\\Py2C.py", L"ShowImage", 256, 128);

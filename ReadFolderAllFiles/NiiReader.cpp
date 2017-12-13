@@ -12,20 +12,27 @@
 
 #define LOADDATA(file,typename_,byte_count,data_size) \
 {	\
-	typename_* data = new  typename_[data_size];\
+	typename_* data;\
+	try{\
+		data = new  typename_[data_size];\
+	}\
+	catch(std::bad_alloc&)\
+	{\
+		return (void*)nullptr; \
+	}\
 	if (!file.read(reinterpret_cast<char*>(data), data_size * sizeof(typename_))) \
-{	\
-	delete[]data; \
-	return (void*)nullptr; \
-}	\
-else \
-{	\
-	if (!_is_system_endian_same_data) \
 	{	\
-		SwapByteOrder(reinterpret_cast<void*>(data),byte_count,data_size);\
+		delete[]data; \
+		return (void*)nullptr; \
 	}	\
-	return reinterpret_cast<void*>(data); \
-}	\
+	else \
+	{	\
+		if (!_is_system_endian_same_data) \
+		{	\
+			SwapByteOrder(reinterpret_cast<void*>(data),byte_count,data_size);\
+		}	\
+		return reinterpret_cast<void*>(data); \
+	}	\
 }
 
 #define LOAD(file,typename_,byte_count,data_size) LOADDATA(file,typename_,byte_count,data_size)
