@@ -53,17 +53,33 @@ def ShowCharImage(image, width, height):
 
 
 ## image is 2d list
-def ShowImage2D(image, width, height):
+def ShowImage2d(image, width, height):
+        print('Invoking Method: [ShowImage2d].')
+        print(len(image))
+        print(len(image[0]))
         pil_image = Image.fromarray(np.array(image))
         pil_image2 = Image.fromarray(np.array(image)*2)
         pil_image.show()
         pil_image2.show()
-        return np.array(image)
+        # image = image.tolist()
+        return list([image, width, height])
 
 
 def ShowImage3d(image,width,height,slice):
         print('Invoking Method: [ShowImage3d].')
+        print(len(image))
+        print(len(image[0]))
+        print(len(image[0][0]))
         return [image, width, height, slice]
+
+
+def ShowImage4d(image,width,height,slice,time):
+	print('Invoking Method: [ShowImage4d].')
+	print( len(image) )
+	print( len(image[0]) )
+	print( len(image[0][0]) )
+	print( len(image[0][0][0]) )
+	return [image, width, height, slice, time]
 
 
 # if __name__=='__main__':

@@ -10,7 +10,7 @@
 
 #pragma warning(disable:4996)
 
-#define LOADDATA(file,typename_,data_size) \
+#define LOADDATA(file,typename_,byte_count,data_size) \
 {	\
 	typename_* data = new  typename_[data_size];\
 	if (!file.read(reinterpret_cast<char*>(data), data_size * sizeof(typename_))) \
@@ -22,13 +22,13 @@ else \
 {	\
 	if (!_is_system_endian_same_data) \
 	{	\
-		ReverseEndian<typename_>(data,data_size);\
+		SwapByteOrder(reinterpret_cast<void*>(data),byte_count,data_size);\
 	}	\
 	return reinterpret_cast<void*>(data); \
 }	\
 }
 
-#define LOAD(file,typename_,data_size) LOADDATA(file,typename_,data_size)
+#define LOAD(file,typename_,byte_count,data_size) LOADDATA(file,typename_,byte_count,data_size)
 
 // #define LOAD(file,typename_,data_size) LOADDATA(file,typename_,data_size)
 
@@ -61,6 +61,7 @@ std::string ToMbs(const wchar_t * wcs)
 NiiReader::NiiReader()
 	: _is_system_endian_same_data{ false }, _data_type{ -1 }, _data_ptr{ nullptr }, _current_type{ TYPE_UNKNOWN }
 {
+	// _dimensions = { 1,1,1,1,1,1,1,1 };
 	cout << "NiiReader Constructor" << endl;
 }
 
@@ -181,8 +182,8 @@ unsigned NiiReader::CheckVersion(ifstream &file)
 	file.read(reinterpret_cast<char*>(&size_hdr), sizeof(int)); // int sizeof_hdr : 4 Bytes
 	file.seekg(0, ios::beg);
 	// system endian is or not same as data.
-	auto reverse_hdr = size_hdr;
-	reverse_hdr = *ReverseEndian(&reverse_hdr,1);
+	int reverse_hdr = size_hdr;
+	SwapByteOrder(reinterpret_cast<void*>(&reverse_hdr), 4);
 	if (size_hdr==348||size_hdr==540)
 	{
 		_is_system_endian_same_data = true;
@@ -237,10 +238,7 @@ bool NiiReader::ReadV1Dimension(Nii_v1_FileHeaderInfo & v1_header_info)
 	{
 		// The data is opposite endian compare the system. Need to reverse data order to system order.
 		// temporary do not implement this.
-		for (int i = 0; i < 8; ++i)
-		{
-			ReverseEndian(&v1_header_info.dim[i],1);
-		}
+		SwapByteOrder(reinterpret_cast<void*>(v1_header_info.dim),2,8);
 	}
 	// 存放generic matrix数据
 	if (v1_header_info.intent_code == 1004 &&
@@ -322,10 +320,7 @@ bool NiiReader::ReadV2Dimension(Nii_v2_FileHeaderInfo &v2_header_info)
 {
 	if (!_is_system_endian_same_data)
 	{
-		for (int i = 0; i < 8; ++i)
-		{
-			ReverseEndian(&v2_header_info.dim[i],1);
-		}
+		SwapByteOrder(reinterpret_cast<void*>(v2_header_info.dim),8,8);
 	}
 	// 存放generic matrix数据
 	if (v2_header_info.intent_code == 1004 &&
@@ -413,35 +408,35 @@ void * NiiReader::ReadData(ifstream &file, short datatype)
 	switch (datatype)
 	{
 	case TYPE_BOOL:
-		LOAD(file, bool , data_size);
+		LOAD(file, bool , 1 , data_size);
 	case TYPE_UNSIGNEDCHAR:
-		LOAD(file, unsigned char, data_size);
+		LOAD(file, unsigned char, 1 , data_size);
 	case TYPE_SHORT:
-		LOAD(file, short, data_size);
+		LOAD(file, short, 2, data_size);
 	case TYPE_INT:
-		LOAD(file, int, data_size);
+		LOAD(file, int, 4, data_size);
 	case TYPE_FLOAT:
-		LOAD(file, float, data_size);
+		LOAD(file, float ,4 , data_size);
 	case TYPE_COMPLEX:
-		LOAD(file, complex<float>, data_size);
+		LOAD(file, complex<float>, 4, data_size*2);
 	case TYPE_DOUBLE:
-		LOAD(file, double, data_size);
+		LOAD(file, double, 8, data_size);
 	case TYPE_RGB:
 		// rgb & rgba use unsigned char to store，虽然rgb是3字节，
 		// 但是因为在_dimensions中已经保存了数据的rgb值信息，所以不许需要做特殊处理
-		LOAD(file, unsigned char, data_size);
+		LOAD(file, unsigned char,1 , data_size);
 	case TYPE_RGBA:
-		LOAD(file, unsigned char, data_size);
+		LOAD(file, unsigned char, 1 , data_size);
 	case TYPE_CHAR:
-		LOAD(file, char, data_size);
+		LOAD(file, char, 1, data_size);
 	case TYPE_UNSIGNEDSHORT:
-		LOAD(file, unsigned short, data_size);
+		LOAD(file, unsigned short,2 , data_size);
 	case TYPE_UNSIGNEDINT:
-		LOAD(file, unsigned int, data_size);
+		LOAD(file, unsigned int, 4 , data_size);
 	case TYPE_LONGLONG:
-		LOAD(file, long long, data_size);
+		LOAD(file, long long, 8 , data_size);
 	case TYPE_UNSIGNEDLONGLONG:
-		LOAD(file, unsigned long long, data_size);
+		LOAD(file, unsigned long long, 8, data_size);
 	case TYPE_LONGDOUBLE:
 	case TYPE_DOUBLEPAIR:
 	case TYPE_LONGDOUBLEPAIR:
