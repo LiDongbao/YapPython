@@ -110,42 +110,55 @@ void Test4D(IYapPython* python, const wchar_t * module_name,
 	delete[]output_data;
 }
 
-void LoadDll()
+INiiReader * LoadNiiDll()
+{
+	auto _module1 = ::LoadLibrary(L"..\\x64\\Debug\\ReadFolderAllFiles.dll");
+	if (!_module1)
+	{
+		std::cout << "Error loading YapPythonDll.dll.\n";
+		return nullptr;
+	}
+	auto get_func = (INiiReader*(*)())::GetProcAddress(_module1, "GetNiiData");
+	if (!get_func)
+	{
+		std::cout << "Cannot find GetYapPython() in YapPythonDLL.dll.\n";
+		return nullptr;
+	}
+	return get_func();
+}
+
+IYapPython* LoadPythonDll()
 {
 	auto _module = ::LoadLibrary(L"..\\x64\\Debug\\YapPythonDll.dll");
 	if (!_module)
 	{
 		std::cout << "Error loading YapPythonDll.dll.\n";
-		return ;
+		return nullptr;
 	}
 
 	auto get_yap_python_func = (IYapPython*(*)())::GetProcAddress(_module, "GetYapPython");
 	if (get_yap_python_func == nullptr)
 	{
 		std::cout << "Cannot find GetYapPython() in YapPythonDLL.dll.\n";
-		return ;
+		return nullptr;
 	}
 
-	IYapPython* python = get_yap_python_func();
+	return get_yap_python_func();
+}
 
-	auto _module1 = ::LoadLibrary(L"..\\x64\\Debug\\ReadFolderAllFiles.dll");
-	if (!_module1)
-		return ;
-	auto get_func = (INiiReader*(*)())::GetProcAddress(_module1, "GetNiiData");
-	if (!get_func)
-		return ;
-	auto nii_reader = get_func();
-
-	
+void YapPythonTest()
+{
+	auto python = LoadPythonDll();
+	auto nii_reader = LoadNiiDll();
 	auto data = nii_reader->ReadFile(L"D:\\test_data\\003_t2_tse_sag.nii");
-	
+
 	auto dimensions = nii_reader->GetDimensions();
 	size_t width = dimensions[0];
 	size_t height = dimensions[1];
 	size_t slice = dimensions[2];
-	size_t time  = dimensions[3];
+	size_t time = dimensions[3];
 	size_t out_width = 0, out_height = 0, out_slice = 0, out_time = 0;
-	/*
+
 	auto out_data_2d = python->Process2D(L"..\\PythonScripts\\Py2C.py", L"ShowImage2d",
 	DataTypeUnsignedShort, data, width, height, out_width, out_height);
 	auto out_data_3d = python->Process3D(L"..\\PythonScripts\\Py2C.py", L"ShowImage3d",
@@ -153,15 +166,8 @@ void LoadDll()
 	auto out_data_4d = python->Process4D(L"..\\PythonScripts\\Py2C.py", L"ShowImage4d",
 	DataTypeUnsignedShort, data, width, height, slice, time,
 	out_width, out_height, out_slice, out_time);
-	*/
-	auto out_data_4d = python->Process4D(L"..\\PythonScripts\\Py2C.py", L"ShowImage4d",
-		DataTypeUnsignedShort, data, width, height, slice, time,
-		out_width, out_height, out_slice, out_time);
-	
-	cout << out_width << "\t" << out_height << "\t" << out_slice << "\t" << out_time << endl;
 
-	delete data;
-	return ;
+	return;
 }
 
 /* Test result:
@@ -169,21 +175,9 @@ void LoadDll()
 3D: Pass: bool, double, float, int, unsigned int, short, unsigned short, unsigned char, char, complex<float>, complex<double>. Failed: None type.
 4D: Pass: bool, double, float, int, unsigned int, short, unsigned short, unsigned char, char, complex<float>, complex<double>. Failed: None type.
 */
-void ClassTest()
+void AllDimensionAllTypeTest()
 {
-	auto _module = ::LoadLibrary(L"..\\x64\\Debug\\YapPythonDll.dll");
-	if (!_module)
-	{
-		std::cout << "Error loading YapPythonDll.dll.\n";
-		return;
-	}
-	auto get_yap_python_func = (IYapPython*(*)())::GetProcAddress(_module, "GetYapPython");
-	if (get_yap_python_func == nullptr)
-	{
-		std::cout << "Cannot find GetYapPython() in YapPythonDLL.dll.\n";
-		return ;
-	}
-	IYapPython* python = get_yap_python_func();
+	IYapPython* python = LoadPythonDll();
 	const wchar_t* function_2d = L"test2d";
 	cout << "\t\t== test2d ==" << endl;
 	cout << "unsigned int	" << endl; Test2D<unsigned int	>(python, L"..\\PythonScripts\\Py2C.py", function_2d, 128, 64);
@@ -198,7 +192,6 @@ void ClassTest()
 	cout << "bool			" << endl; Test2D<bool			>(python, L"..\\PythonScripts\\Py2C.py", function_2d, 128, 64);
 	cout << "complex<float> " << endl; Test2D<complex<float>>(python, L"..\\PythonScripts\\Py2C.py", function_2d, 128, 64);
 	cout << "complex<double>" << endl; Test2D<complex<double>>(python, L"..\\PythonScripts\\Py2C.py", function_2d, 128, 64);
-	// Test2D<complex<double>>(python, L"..\\PythonScripts\\Py2C.py", function_2d, 256, 128);
 
 	const wchar_t* function_3d = L"test3d";
 	cout << "\t\t== test3d ==" << endl;
@@ -233,9 +226,8 @@ void ClassTest()
 
 int main()
 {
-	// LoadDll();
-	ClassTest();
-
+	YapPythonTest();
+	AllDimensionAllTypeTest();
 	system("pause");
 	return 0;
 };
