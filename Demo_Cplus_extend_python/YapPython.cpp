@@ -91,18 +91,12 @@ protected:
 	template<typename T>
 	void Pylist2D2CArray(const boostpy::list& li, T* out_data, size_t width, size_t height);
 
-	template<typename T>
-	void pylist2d2Carray_complex(const boostpy::list &li, complex<T>* out_data, size_t width, size_t height);
-
 	/* transmit data through 3 Dimensions */
 	template<typename T>
 	boostpy::list CArray2Pylist3D(const T* data, size_t width, size_t height, size_t slice);
 
 	template<typename T>
 	void Pylist3D2CArray(const boostpy::list& li, T* out_data, size_t width, size_t height, size_t slice);
-
-	template<typename T>
-	void pylist3d2Carray_complex(const boostpy::list &li, complex<T>* out_data, size_t width, size_t height, size_t slice);
 
 	/* transmit data through 4 Dimensions */
 	template<typename T>
@@ -111,8 +105,6 @@ protected:
 	template<typename T>
 	void Pylist4D2CArray(const boostpy::list& li, T* out_data, size_t width, size_t height, size_t slice, size_t time);
 
-	template<typename T>
-	void pylist4d2Carray_complex(const boostpy::list &li, complex<T>* out_data, size_t width, size_t height, size_t slice, size_t time);
 };
 
 YapPythonImpl::YapPythonImpl()
@@ -251,14 +243,14 @@ void* YapPythonImpl::Process4D(const wchar_t* module, const wchar_t* method, int
 }
 
 template< typename T>
-std::vector<T>
-YapPythonImpl::Pylist2Vector(const boostpy::object& iterable)
+std::vector<T> YapPythonImpl::Pylist2Vector(const boostpy::object& iterable)
 {
 	return std::vector<T>(boostpy::stl_input_iterator<T>(iterable),
 		boostpy::stl_input_iterator<T>());
 }
 
-template<> std::vector<bool> YapPythonImpl::Pylist2Vector(const boostpy::object& iterable)
+template<> 
+std::vector<bool> YapPythonImpl::Pylist2Vector(const boostpy::object& iterable)
 {
 	std::vector<bool> vector_bool(len(iterable));
 	try
@@ -271,8 +263,10 @@ template<> std::vector<bool> YapPythonImpl::Pylist2Vector(const boostpy::object&
 	catch (...)
 	{
 		if (PyErr_Occurred())
+		{
 			PyErr_Print();
-		PyErr_Clear();
+			PyErr_Clear();
+		}
 	}
 	return vector_bool;
 }
@@ -333,35 +327,6 @@ void YapPythonImpl::Pylist2D2CArray(const boostpy::list& li, T* out_data, size_t
 	}
 }
 
-template <>
-void YapPythonImpl::Pylist2D2CArray(const boostpy::list& li, complex<double>* out_data, size_t width, size_t height)
-{
-	pylist2d2Carray_complex(li, out_data, width, height);
-}
-
-template <>
-void YapPythonImpl::Pylist2D2CArray(const boostpy::list& li, complex<float>* out_data, size_t width, size_t height)
-{
-	pylist2d2Carray_complex(li, out_data, width, height);
-}
-
-/* complex type Still Error! */
-template<typename T>
-void YapPythonImpl::pylist2d2Carray_complex(const boostpy::list &li, complex<T>* out_data, size_t width, size_t height)
-{
-	throw "Error";
-	Py_complex sx;
-	for (size_t h = 0; h < height; ++h)
-	{
-		for (size_t w = 0; w < width; ++w)
-		{
-			PyArg_Parse(PyList_GET_ITEM(li.ptr(), (h*width + w)), "D", &sx);
-			out_data[h*width*w].real(float(sx.real));
-			out_data[h*width*w].imag(float(sx.imag));
-		}
-	}
-}
-
 /* convert c++ array to python 3D list */
 template<typename T>
 boostpy::list YapPythonImpl::CArray2Pylist3D(const T* data, size_t width, size_t height, size_t slice)
@@ -397,38 +362,6 @@ void YapPythonImpl::Pylist3D2CArray(const boostpy::list& li, T* out_data, size_t
 			for (size_t w = 0; w < width; ++w)
 			{
 				*(p++) = boostpy::extract<T>(li[s][h][w]);
-			}
-		}
-	}
-}
-
-template<>
-void YapPythonImpl::Pylist3D2CArray(const boostpy::list& li, complex<double>* out_data, size_t width, size_t height, size_t slice)
-{
-	pylist3d2Carray_complex(li, out_data, width, height, slice);
-}
-
-template<>
-void YapPythonImpl::Pylist3D2CArray(const boostpy::list& li, complex<float>* out_data, size_t width, size_t height, size_t slice)
-{
-	pylist3d2Carray_complex(li, out_data, width, height, slice);
-}
-
-/* complex type still has problems.*/
-template<typename T>
-void YapPythonImpl::pylist3d2Carray_complex(const boostpy::list &li, complex<T>* out_data, size_t width, size_t height, size_t slice)
-{
-	throw "Error!";
-	Py_complex sx;
-	for (size_t w = 0; w < width; ++w)
-	{
-		for (size_t h = 0; h < height; ++h)
-		{
-			for (size_t s = 0; s < slice; ++s)
-			{
-				PyArg_Parse(PyList_GET_ITEM(li.ptr(), (w*height*slice + h*slice + s)), "D", &sx);
-				out_data[w*height*slice + h*slice + s].real(sx.real);
-				out_data[w*height*slice + h*slice + s].imag(sx.imag);
 			}
 		}
 	}
@@ -475,41 +408,6 @@ void YapPythonImpl::Pylist4D2CArray(const boostpy::list& li, T* out_data, size_t
 				for (size_t w = 0; w < width; ++w)
 				{
 					*(p++) = boostpy::extract<T>(li[t][s][h][w]);
-				}
-			}
-		}
-	}
-}
-
-template<>
-void YapPythonImpl::Pylist4D2CArray(const boostpy::list& li, complex<double>* out_data, size_t width, size_t height, size_t slice, size_t time)
-{
-	pylist4d2Carray_complex(li, out_data, width, height, slice, time);
-}
-
-template<>
-void YapPythonImpl::Pylist4D2CArray(const boostpy::list& li, complex<float>* out_data, size_t width, size_t height, size_t slice, size_t time)
-{
-	pylist4d2Carray_complex(li, out_data, width, height, slice, time);
-}
-
-/* still Error! */
-template<typename T>
-void YapPythonImpl::pylist4d2Carray_complex(const boostpy::list &li, complex<T>* out_data, size_t width, size_t height, size_t slice, size_t time)
-{
-	throw "Error!";
-	Py_complex sx;
-	for (size_t t = 0; t < time; ++t)
-	{
-		for (size_t s = 0; s < slice; ++s)
-		{
-			for (size_t h = 0; h < height; ++h)
-			{
-				for (size_t w= 0; w < width; ++w)
-				{
-					PyArg_Parse(PyList_GET_ITEM(li.ptr(), (t*slice*height*width + s*height*width + h*width + w)), "D", &sx);
-					out_data[t*slice*height*width + s*height*width + h*width + w].real(sx.real);
-					out_data[t*slice*height*width + s*height*width + h*width + w].imag(sx.imag);
 				}
 			}
 		}

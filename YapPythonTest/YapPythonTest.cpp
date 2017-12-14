@@ -38,6 +38,24 @@ template<> void buidData(size_t image_size, unsigned char * data)
 	}
 }
 
+template<> void buidData(size_t image_size, complex<float> * data)
+{
+	for (int i = 0; i < image_size; ++i)
+	{
+		data[i].real(float(i));
+		data[i].imag(float(i));
+	}
+}
+
+template<> void buidData(size_t image_size, complex<double> * data)
+{
+	for (int i = 0; i < image_size; ++i)
+	{
+		data[i].real(double(i));
+		data[i].imag(double(i));
+	}
+}
+
 template<typename MYTYPE>
 void Test2D(IYapPython* python, const wchar_t * module_name, 
 	const wchar_t * method_name, size_t dwidth, size_t dheight)
@@ -147,9 +165,9 @@ void LoadDll()
 }
 
 /* Test result:
-2D: Pass: bool, double, float, int, unsigned int, short, unsigned short, unsigned char, char. Failed: complex<float>, complex<double>
-3D: Pass: bool, double, float, int, unsigned int, short, unsigned short, unsigned char, char. Failed: complex<float>, complex<double>
-4D: Pass: bool, double, float, int, unsigned int, short, unsigned short, unsigned char, char. Failed: complex<float>, complex<double>
+2D: Pass: bool, double, float, int, unsigned int, short, unsigned short, unsigned char, char, complex<float>, complex<double>. Failed: None type.
+3D: Pass: bool, double, float, int, unsigned int, short, unsigned short, unsigned char, char, complex<float>, complex<double>. Failed: None type.
+4D: Pass: bool, double, float, int, unsigned int, short, unsigned short, unsigned char, char, complex<float>, complex<double>. Failed: None type.
 */
 void ClassTest()
 {
@@ -177,32 +195,40 @@ void ClassTest()
 	cout << "double			" << endl; Test2D<double		>(python, L"..\\PythonScripts\\Py2C.py", function_2d, 128, 64);
 	cout << "short			" << endl; Test2D<short			>(python, L"..\\PythonScripts\\Py2C.py", function_2d, 128, 64);
 	cout << "unsigned short	" << endl; Test2D<unsigned short>(python, L"..\\PythonScripts\\Py2C.py", function_2d, 128, 64);
-	// Test2D<complex<float>>(python, L"..\\PythonScripts\\Py2C.py", function_2d, 256, 128);
+	cout << "bool			" << endl; Test2D<bool			>(python, L"..\\PythonScripts\\Py2C.py", function_2d, 128, 64);
+	cout << "complex<float> " << endl; Test2D<complex<float>>(python, L"..\\PythonScripts\\Py2C.py", function_2d, 128, 64);
+	cout << "complex<double>" << endl; Test2D<complex<double>>(python, L"..\\PythonScripts\\Py2C.py", function_2d, 128, 64);
 	// Test2D<complex<double>>(python, L"..\\PythonScripts\\Py2C.py", function_2d, 256, 128);
 
 	const wchar_t* function_3d = L"test3d";
 	cout << "\t\t== test3d ==" << endl;
-	cout << "unsigned int	" << endl; Test3D<unsigned int>(python, L"..\\PythonScripts\\Py2C.py", function_3d, 64, 64, 10);
-	cout << "char			" << endl; Test3D<char>(python, L"..\\PythonScripts\\Py2C.py", function_3d, 64, 64, 10);
-	cout << "unsigned char	" << endl; Test3D<unsigned char>(python, L"..\\PythonScripts\\Py2C.py", function_3d, 64, 64, 10);
-	cout << "int			" << endl; Test3D<int>(python, L"..\\PythonScripts\\Py2C.py", function_3d, 64, 64, 10);
-	cout << "unsigned int	" << endl; Test3D<unsigned int>(python, L"..\\PythonScripts\\Py2C.py", function_3d, 64, 64, 10);
-	cout << "float			" << endl; Test3D<float>(python, L"..\\PythonScripts\\Py2C.py", function_3d, 64, 64, 10);
-	cout << "double			" << endl; Test3D<double>(python, L"..\\PythonScripts\\Py2C.py", function_3d, 64, 64, 10);
-	cout << "short			" << endl; Test3D<short>(python, L"..\\PythonScripts\\Py2C.py", function_3d, 64, 64, 10);
+	cout << "unsigned int	" << endl; Test3D<unsigned int	>(python, L"..\\PythonScripts\\Py2C.py", function_3d, 64, 64, 10);
+	cout << "char			" << endl; Test3D<char			>(python, L"..\\PythonScripts\\Py2C.py", function_3d, 64, 64, 10);
+	cout << "unsigned char	" << endl; Test3D<unsigned char	>(python, L"..\\PythonScripts\\Py2C.py", function_3d, 64, 64, 10);
+	cout << "int			" << endl; Test3D<int			>(python, L"..\\PythonScripts\\Py2C.py", function_3d, 64, 64, 10);
+	cout << "unsigned int	" << endl; Test3D<unsigned int	>(python, L"..\\PythonScripts\\Py2C.py", function_3d, 64, 64, 10);
+	cout << "float			" << endl; Test3D<float			>(python, L"..\\PythonScripts\\Py2C.py", function_3d, 64, 64, 10);
+	cout << "double			" << endl; Test3D<double		>(python, L"..\\PythonScripts\\Py2C.py", function_3d, 64, 64, 10);
+	cout << "short			" << endl; Test3D<short			>(python, L"..\\PythonScripts\\Py2C.py", function_3d, 64, 64, 10);
 	cout << "unsigned short	" << endl; Test3D<unsigned short>(python, L"..\\PythonScripts\\Py2C.py", function_3d, 64, 64, 10);
+	cout << "bool			" << endl; Test3D<bool			>(python, L"..\\PythonScripts\\Py2C.py", function_3d, 64, 64, 10);
+	cout << "complex<float>	" << endl; Test3D<complex<float>>(python, L"..\\PythonScripts\\Py2C.py", function_3d, 64, 64, 10);
+	cout << "complex<double>" << endl; Test3D<complex<double>>(python, L"..\\PythonScripts\\Py2C.py", function_3d, 64, 64, 10);
 
 	const wchar_t * function_4d = L"test4d";
 	cout << "\t\t== test4d ==" << endl;
-	cout << "unsigned int	" << endl; Test4D<unsigned int>(python, L"..\\PythonScripts\\Py2C.py", function_4d, 32, 32, 10, 4);
-	cout << "char			" << endl; Test4D<char>(python, L"..\\PythonScripts\\Py2C.py", function_4d, 32, 32, 10, 4);
-	cout << "unsigned char	" << endl; Test4D<unsigned char>(python, L"..\\PythonScripts\\Py2C.py", function_4d, 32, 32, 10, 4);
-	cout << "int			" << endl; Test4D<int>(python, L"..\\PythonScripts\\Py2C.py", function_4d, 32, 32, 10, 4);
-	cout << "unsigned int	" << endl; Test4D<unsigned int>(python, L"..\\PythonScripts\\Py2C.py", function_4d, 32, 32, 10, 4);
-	cout << "float			" << endl; Test4D<float>(python, L"..\\PythonScripts\\Py2C.py", function_4d, 32, 32, 10, 4);
-	cout << "double			" << endl; Test4D<double>(python, L"..\\PythonScripts\\Py2C.py", function_4d, 32, 32, 10, 4);
-	cout << "short			" << endl; Test4D<short>(python, L"..\\PythonScripts\\Py2C.py", function_4d, 32, 32, 10, 4);
+	cout << "unsigned int	" << endl; Test4D<unsigned int	>(python, L"..\\PythonScripts\\Py2C.py", function_4d, 32, 32, 10, 4);
+	cout << "char			" << endl; Test4D<char			>(python, L"..\\PythonScripts\\Py2C.py", function_4d, 32, 32, 10, 4);
+	cout << "unsigned char	" << endl; Test4D<unsigned char	>(python, L"..\\PythonScripts\\Py2C.py", function_4d, 32, 32, 10, 4);
+	cout << "int			" << endl; Test4D<int			>(python, L"..\\PythonScripts\\Py2C.py", function_4d, 32, 32, 10, 4);
+	cout << "unsigned int	" << endl; Test4D<unsigned int	>(python, L"..\\PythonScripts\\Py2C.py", function_4d, 32, 32, 10, 4);
+	cout << "float			" << endl; Test4D<float			>(python, L"..\\PythonScripts\\Py2C.py", function_4d, 32, 32, 10, 4);
+	cout << "double			" << endl; Test4D<double		>(python, L"..\\PythonScripts\\Py2C.py", function_4d, 32, 32, 10, 4);
+	cout << "short			" << endl; Test4D<short			>(python, L"..\\PythonScripts\\Py2C.py", function_4d, 32, 32, 10, 4);
 	cout << "unsigned short	" << endl; Test4D<unsigned short>(python, L"..\\PythonScripts\\Py2C.py", function_4d, 32, 32, 10, 4);
+	cout << "bool			" << endl; Test4D<bool			>(python, L"..\\PythonScripts\\Py2C.py", function_4d, 32, 32, 10, 4);
+	cout << "complex<float>	" << endl; Test4D<complex<float>>(python, L"..\\PythonScripts\\Py2C.py", function_4d, 32, 32, 10, 4);
+	cout << "complex<double>" << endl; Test4D<complex<double>>(python, L"..\\PythonScripts\\Py2C.py", function_4d, 32, 32, 10, 4);
 }
 
 int main()
