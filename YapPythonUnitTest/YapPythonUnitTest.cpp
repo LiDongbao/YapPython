@@ -5,7 +5,7 @@
 
 #include <boost\test\unit_test.hpp>
 #include "..\Demo_Cplus_extend_python\IYapPython.h"
-#include "..\Demo_Cplus_extend_python\YapPythonImp.h"
+#include "..\Demo_Cplus_extend_python\YapPython.h"
 #include <complex>
 #include <windows.h>
 #include <boost/python/str.hpp>
@@ -67,7 +67,9 @@ protected:
 			BOOST_CHECK(abs(input_data[i].real() - output_data[i].real()) < 1e-7);
 			BOOST_CHECK(abs(input_data[i].imag() - output_data[i].imag()) < 1e-7);
 		}
-		delete input_data, output_data;
+		delete []input_data;
+		delete []output_data;
+
 		return;
 	};
 
@@ -197,8 +199,8 @@ protected:
 			BOOST_CHECK(abs(input_data[i].real() - output_data[i].real()) < 1e-7);
 			BOOST_CHECK(abs(input_data[i].imag() - output_data[i].imag()) < 1e-7);
 		}
-		delete input_data, output_data;
-		return;
+		delete[]input_data;
+		delete[]output_data;
 	};
 
 	template<typename T>
@@ -212,8 +214,8 @@ protected:
 
 		BOOST_CHECK((dwidth != out_width) || (dheight != out_height) || (dslice != out_slice));
 		BOOST_CHECK(output_data != nullptr);
-		delete input_data, output_data;
-		return;
+		delete[]input_data;
+		delete[]output_data;
 	};
 
 public:

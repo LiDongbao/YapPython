@@ -37,39 +37,207 @@ std::string ToMbs(const wchar_t * wcs)
 	return std::string(buffer);
 }
 
-class YapPythonImpl : public IYapPython
+class YapPythonImpl : public IYapPython2
 {
 
 public:
 	YapPythonImpl();
 	~YapPythonImpl();
 
-	virtual void* Process2D(const wchar_t* module_name, const wchar_t* method_name, int data_type,
-		void * data, size_t width, size_t height, size_t& out_width, size_t& out_height) override;
-
-	virtual void* Process3D(const wchar_t* module_name, const wchar_t* method_name, int data_type,
-		void * data, size_t width, size_t height, size_t slice,
-		size_t& out_width, size_t& out_height, size_t& out_slice) override;
-
-	virtual void* Process4D(const wchar_t* module_name, const wchar_t* method_name, int data_type,
-		void * data, size_t width, size_t height, size_t slice, size_t time, size_t& out_width,
-		size_t& out_height, size_t& out_slice, size_t& out_time) override;
+	virtual void* Process(const wchar_t* module, const wchar_t* method, int data_type,
+		void * data, size_t dim_count, size_t input_size[], size_t output_size[])
+	{
+		switch (data_type)
+		{
+		case DataTypeInt:
+			return DoProcessXD(module, method, reinterpret_cast<int*>(data), dim_count, input_size, output_size);
+		case DataTypeUnsignedInt:
+			return DoProcessXD(module, method, reinterpret_cast<unsigned int*>(data), dim_count, input_size, output_size);
+		case DataTypeChar:
+			return DoProcessXD(module, method, reinterpret_cast<char*>(data), dim_count, input_size, output_size);
+		case DataTypeUnsignedChar:
+			return DoProcessXD(module, method, reinterpret_cast<unsigned char*>(data), dim_count, input_size, output_size);
+		case DataTypeShort:
+			return DoProcessXD(module, method, reinterpret_cast<short*>(data), dim_count, input_size, output_size);
+		case DataTypeUnsignedShort:
+			return DoProcessXD(module, method, reinterpret_cast<unsigned short*>(data), dim_count, input_size, output_size);
+		case DataTypeFloat:
+			return DoProcessXD(module, method, reinterpret_cast<float*>(data), dim_count, input_size, output_size);
+		case DataTypeDouble:
+			return DoProcessXD(module, method, reinterpret_cast<double*>(data), dim_count, input_size, output_size);
+		case DataTypeComplexFloat:
+			return DoProcessXD(module, method, reinterpret_cast<std::complex<float>*>(data), dim_count, input_size, output_size);
+		case DataTypeComplexDouble:
+			return DoProcessXD(module, method, reinterpret_cast<std::complex<double>*>(data), dim_count, input_size, output_size);
+		case DataTypeBool:
+			return DoProcessXD(module, method, reinterpret_cast<bool*>(data), dim_count, input_size, output_size);
+		default:
+			return nullptr;
+		}
+	}
 
 protected:
 	template<typename T>
-	void* DoProcess2D(const wchar_t* module_name, const wchar_t* method_name,
-		T* data, size_t width, size_t height,
-		size_t& out_width, size_t& out_height);
+	void* DoProcessXD(const wchar_t* module, const wchar_t* method,
+		T * data, size_t dim_count, size_t input_size[], size_t output_size[])
+	{
+		if (!Py_IsInitialized())
+			return nullptr;
+
+		boostpy::object main_module;
+		boostpy::object main_namespace;
+		try
+		{
+			main_module = boostpy::import("__main__");
+			main_namespace = main_module.attr("__dict__");
+			boostpy::object simple = boostpy::exec_file(ToMbs(module).c_str(), main_namespace, main_namespace);
+			boostpy::object func = main_namespace[ToMbs(method).c_str()];
+
+			// convert T* to python list
+			boostpy::list input_matrix_list;
+			boostpy::list return_list;
+			boostpy::list data_matrix_list;
+			switch (dim_count)
+			{
+			case 2:
+				input_matrix_list = CArray2Pylist2D(data, input_size[0], input_size[1]);
+				return_list = boostpy::extract<boostpy::list>(func(input_matrix_list, input_size[0], input_size[1]));
+
+				// convert vector to T* out_data
+				data_matrix_list = boostpy::extract<boostpy::list>(return_list[0]);
+				if (PyList_Check(data_matrix_list.ptr()) && PyList_Size(return_list.ptr()) == 3)
+				{
+					output_size[0] = boostpy::extract<size_t>(return_list[1]);
+					output_size[1] = boostpy::extract<size_t>(return_list[2]);
+
+					T* output_data = new T[output_size[0] * output_size[1]];
+					Pylist2D2CArray(data_matrix_list, output_data, output_size[0], output_size[1]);
+
+					return reinterpret_cast<void*>(output_data);
+				}
+				else
+				{
+					// ??? How to change this PyErr_NewException can point to the location of error occurred.
+					throw PyErr_NewException("Return value[0] is not a data list. Check python script return value!",
+						main_namespace.ptr(), main_namespace.ptr());
+				}
+				break;
+			case 3:
+				input_matrix_list = CArray2Pylist3D(data, input_size[0], input_size[1], input_size[2]);
+				return_list = boostpy::extract<boostpy::list>(func(input_matrix_list, input_size[0], input_size[1], input_size[2]));
+
+				// convert vector to T* out_data
+				data_matrix_list = boostpy::extract<boostpy::list>(return_list[0]);
+				if (PyList_Check(data_matrix_list.ptr()) && PyList_Size(return_list.ptr()) == 4)
+				{
+					output_size[0] = boostpy::extract<size_t>(return_list[1]);
+					output_size[1] = boostpy::extract<size_t>(return_list[2]);
+					output_size[2] = boostpy::extract<size_t>(return_list[3]);
+
+					T* output_data = new T[output_size[0] * output_size[1] * output_size[2]];
+					Pylist3D2CArray(data_matrix_list, output_data, output_size[0], output_size[1], output_size[2]);
+
+					return reinterpret_cast<void*>(output_data);
+				}
+				else
+				{
+					throw PyErr_NewException("Return value[0] is not a data list. Check python script return value!",
+						main_namespace.ptr(), main_namespace.ptr());
+				}
+				break;
+			case 4:
+				input_matrix_list = CArray2Pylist4D(data, input_size[0], input_size[1], input_size[2], input_size[3]);
+				return_list = boostpy::extract<boostpy::list>(func(input_matrix_list, input_size[0], input_size[1], input_size[2], input_size[3]));
+
+				// convert vector to T* out_data
+				data_matrix_list = boostpy::extract<boostpy::list>(return_list[0]);
+				if (PyList_Check(data_matrix_list.ptr()) && PyList_Size(return_list.ptr()) == 5)
+				{
+					output_size[0] = boostpy::extract<size_t>(return_list[1]);
+					output_size[1] = boostpy::extract<size_t>(return_list[2]);
+					output_size[2] = boostpy::extract<size_t>(return_list[3]);
+					output_size[3] = boostpy::extract<size_t>(return_list[4]);
+
+					T* output_data = new T[output_size[0] * output_size[1] * output_size[2] * output_size[3]];
+					Pylist4D2CArray(data_matrix_list, output_data, output_size[0], output_size[1], output_size[2], output_size[3]);
+
+					return reinterpret_cast<void*>(output_data);
+				}
+				else
+				{
+					throw PyErr_NewException("Return value[0] is not a data list. Check python script return value!",
+						main_namespace.ptr(), main_namespace.ptr());
+				}
+				break;
+			default:
+				return nullptr;
+			}
+
+		}
+		catch (...)
+		{
+			if (PyErr_Occurred())
+				PyErr_Print();
+			PyErr_Clear();
+		}
+		return nullptr;
+	};
+
+	/*
+	virtual void* Process2D(const wchar_t* module, const wchar_t* method, int data_type,
+		void * data, size_t input_size[], size_t output_size[])
+	{
+		switch (data_type)
+		{
+		case DataTypeInt:
+			return DoProcess2D(module, method, reinterpret_cast<int*>(data), input_size, output_size);
+		case DataTypeUnsignedInt:
+			return DoProcess2D(module, method, reinterpret_cast<unsigned int*>(data), input_size, output_size);
+		case DataTypeChar:
+			return DoProcess2D(module, method, reinterpret_cast<char*>(data), input_size, output_size);
+		case DataTypeUnsignedChar:
+			return DoProcess2D(module, method, reinterpret_cast<unsigned char*>(data), input_size, output_size);
+		case DataTypeShort:
+			return DoProcess2D(module, method, reinterpret_cast<short*>(data), input_size, output_size);
+		case DataTypeUnsignedShort:
+			return DoProcess2D(module, method, reinterpret_cast<unsigned short*>(data), input_size, output_size);
+		case DataTypeFloat:
+			return DoProcess2D(module, method, reinterpret_cast<float*>(data), input_size, output_size);
+		case DataTypeDouble:
+			return DoProcess2D(module, method, reinterpret_cast<double*>(data), input_size, output_size);
+		case DataTypeComplexFloat:
+			return DoProcess2D(module, method, reinterpret_cast<std::complex<float>*>(data), input_size, output_size);
+		case DataTypeComplexDouble:
+			return DoProcess2D(module, method, reinterpret_cast<std::complex<double>*>(data), input_size, output_size);
+		case DataTypeBool:
+			return DoProcess2D(module, method, reinterpret_cast<bool*>(data), input_size, output_size);
+		default:
+			return nullptr;
+		}
+	}
+
+	virtual void* Process3D(const wchar_t* module, const wchar_t* method, int data_type,
+		void * data, size_t width, size_t height, size_t slice,
+		size_t& out_width, size_t& out_height, size_t& out_slice) override;
+
+	virtual void* Process4D(const wchar_t* module, const wchar_t* method, int data_type,
+		void * data, size_t width, size_t height, size_t slice, size_t time, size_t& out_width,
+		size_t& out_height, size_t& out_slice, size_t& out_time) override;
 
 	template<typename T>
-	void* DoProcess3D(const wchar_t* module_name, const wchar_t* method_name,
+	void* DoProcess2D(const wchar_t* module, const wchar_t* method,
+		T* data, size_t input_size[], size_t output_size[]);
+
+	template<typename T>
+	void* DoProcess3D(const wchar_t* module, const wchar_t* method,
 		T* data, size_t width, size_t height, size_t slice,
 		size_t& out_width, size_t& out_height, size_t& out_slice);
 
 	template<typename T>
-	void* DoProcess4D(const wchar_t* module_name, const wchar_t* method_name,
+	void* DoProcess4D(const wchar_t* module, const wchar_t* method,
 		T* data, size_t width, size_t height, size_t slice, size_t time,
 		size_t& out_width, size_t& out_height, size_t& out_slice, size_t &out_time);
+	*/
 
 	/* transmit data through 1 Dimension */
 	template< typename T>
@@ -122,38 +290,7 @@ YapPythonImpl::~YapPythonImpl()
 	}
 };
 
-void* YapPythonImpl::Process2D(const wchar_t* module, const wchar_t* method, int data_type, 
-	void * data, size_t width, size_t height, size_t & out_width, size_t & out_height)
-{
-	switch (data_type)
-	{
-	case DataTypeInt:
-		return DoProcess2D(module, method, reinterpret_cast<int*>(data), width, height, out_width, out_height);
-	case DataTypeUnsignedInt:
-		return DoProcess2D(module, method, reinterpret_cast<unsigned int*>(data),width, height, out_width, out_height);
-	case DataTypeChar:
-		return DoProcess2D(module, method, reinterpret_cast<char*>(data), width, height, out_width, out_height);
-	case DataTypeUnsignedChar:
-		return DoProcess2D(module, method, reinterpret_cast<unsigned char*>(data), width, height, out_width, out_height);
-	case DataTypeShort:
-		return DoProcess2D(module, method, reinterpret_cast<short*>(data), width, height, out_width, out_height);
-	case DataTypeUnsignedShort:
-		return DoProcess2D(module, method, reinterpret_cast<unsigned short*>(data), width, height, out_width, out_height);
-	case DataTypeFloat:
-		return DoProcess2D(module, method, reinterpret_cast<float*>(data),  width, height, out_width, out_height);
-	case DataTypeDouble:
-		return DoProcess2D(module, method, reinterpret_cast<double*>(data), width, height, out_width, out_height);
-	case DataTypeComplexFloat:
-		return DoProcess2D(module, method, reinterpret_cast<std::complex<float>*>(data), width, height, out_width, out_height);
-	case DataTypeComplexDouble:
-		return DoProcess2D(module, method, reinterpret_cast<std::complex<double>*>(data), width, height, out_width, out_height);
-	case DataTypeBool:
-		return DoProcess2D(module, method, reinterpret_cast<bool*>(data), width, height, out_width, out_height);
-	default:
-		return nullptr;
-	}
-}
-
+/*
 void* YapPythonImpl::Process3D(const wchar_t* module, const wchar_t* method, int data_type,
 	void * data, size_t width, size_t height, size_t slice, 
 	size_t& out_width, size_t& out_height, size_t& out_slice)
@@ -241,6 +378,7 @@ void* YapPythonImpl::Process4D(const wchar_t* module, const wchar_t* method, int
 		return nullptr;
 	}
 }
+*/
 
 template< typename T>
 std::vector<T> YapPythonImpl::Pylist2Vector(const boostpy::object& iterable)
@@ -372,6 +510,8 @@ template<typename T>
 boostpy::list YapPythonImpl::CArray2Pylist4D(const T* data, size_t width, size_t height, size_t slice, size_t time)
 {
 	boostpy::list outsider;
+	auto p = data;
+
 	// pylist order: a[time][slice][height][width]
 	for (size_t t = 0; t < time; ++t)
 	{
@@ -384,7 +524,7 @@ boostpy::list YapPythonImpl::CArray2Pylist4D(const T* data, size_t width, size_t
 				boostpy::list inner;
 				for (size_t w = 0; w < width; ++w)
 				{
-					inner.append(*(data + (t*slice*height*width + s*height*width + h*width + w)));
+					inner.append(*p++);
 				}
 				midder.append(inner);
 			}
@@ -414,10 +554,10 @@ void YapPythonImpl::Pylist4D2CArray(const boostpy::list& li, T* out_data, size_t
 	}
 }
 
+/*
 template<typename T>
-void* YapPythonImpl::DoProcess2D(const wchar_t* module_name, const wchar_t* method_name,
-	T* data, size_t width, size_t height, 
-	size_t& out_width, size_t& out_height)
+virtual void* YapPythonImpl::DoProcess2D(const wchar_t* module, const wchar_t* method,
+	T* data, size_t input_size[], size_t output_size[])
 {
 	if (!Py_IsInitialized())
 		return nullptr;
@@ -428,23 +568,23 @@ void* YapPythonImpl::DoProcess2D(const wchar_t* module_name, const wchar_t* meth
 	{
 		main_module = boostpy::import("__main__");
 		main_namespace = main_module.attr("__dict__");
-		boostpy::object simple = boostpy::exec_file(ToMbs(module_name).c_str(), main_namespace, main_namespace); // "D:\\demoPython\\example.py"
-		boostpy::object method = main_namespace[ToMbs(method_name).c_str()];
+		boostpy::object simple = boostpy::exec_file(ToMbs(module).c_str(), main_namespace, main_namespace); // "D:\\demoPython\\example.py"
+		boostpy::object func = main_namespace[ToMbs(method).c_str()];
 
 		// convert T* to python 2D list	!complex still can NOT be converted.
-		boostpy::list input_pylist = CArray2Pylist2D(data, width, height);
+		boostpy::list input_pylist = CArray2Pylist2D(data, input_size[0], input_size[1]);
 
-		boostpy::list return_list = boostpy::extract<boostpy::list>(method(input_pylist, width, height));
+		boostpy::list return_list = boostpy::extract<boostpy::list>(func(input_pylist, input_size[0], input_size[1]));
 
 		// convert vector to T* out_data: [[..., data, ...], width, height];
 		boostpy::list data_matrix_list = boostpy::extract<boostpy::list>(return_list[0]);
 		if (PyList_Check(data_matrix_list.ptr()) && PyList_Size(return_list.ptr())==3)
 		{
-			out_width = boostpy::extract<size_t>(return_list[1]);
-			out_height = boostpy::extract<size_t>(return_list[2]);
+			output_size[0] = boostpy::extract<size_t>(return_list[1]);
+			output_size[1] = boostpy::extract<size_t>(return_list[2]);
 
-			T* output_data = new T[out_width * out_height];
-			Pylist2D2CArray(data_matrix_list, output_data, out_width, out_height);
+			T* output_data = new T[output_size[0] * output_size[1]];
+			Pylist2D2CArray(data_matrix_list, output_data, output_size[0], output_size[1]);
 
 			return reinterpret_cast<void*>(output_data);
 		}
@@ -466,12 +606,12 @@ void* YapPythonImpl::DoProcess2D(const wchar_t* module_name, const wchar_t* meth
 };
 
 template<typename T>
-void* YapPythonImpl::DoProcess3D(const wchar_t* module_name, const wchar_t * method_name,
+void* YapPythonImpl::DoProcess3D(const wchar_t* module, const wchar_t * method,
 	T * data, size_t width, size_t height, size_t slice, 
 	size_t& out_width, size_t& out_height, size_t& out_slice)
 {
 	if (!Py_IsInitialized())
-		return nullptr;
+		return nullptr; 
 
 	boostpy::object main_module;
 	boostpy::object main_namespace;
@@ -479,25 +619,21 @@ void* YapPythonImpl::DoProcess3D(const wchar_t* module_name, const wchar_t * met
 	{
 		main_module = boostpy::import("__main__");
 		main_namespace = main_module.attr("__dict__");
-		boostpy::object simple = boostpy::exec_file(ToMbs(module_name).c_str(), main_namespace, main_namespace); // "D:\\demoPython\\example.py"
-		boostpy::object method = main_namespace[ToMbs(method_name).c_str()];
+		boostpy::object simple = boostpy::exec_file(ToMbs(module).c_str(), main_namespace, main_namespace); // "D:\\demoPython\\example.py"
+		boostpy::object func = main_namespace[ToMbs(method).c_str()];
 
 		// convert T* to python list
 		boostpy::list input_matrix_list = CArray2Pylist3D(data, width, height, slice);
 
-		boostpy::list return_List = boostpy::extract<boostpy::list>(method(input_matrix_list, width, height, slice));
+		boostpy::list return_list = boostpy::extract<boostpy::list>(func(input_matrix_list, width, height, slice));
 
 		// convert vector to T* out_data
-		boostpy::list data_matrix_list = boostpy::extract<boostpy::list>(return_List[0]);
-		if (PyList_Check(data_matrix_list.ptr()) && PyList_Size(return_List.ptr()) == 4)
+		boostpy::list data_matrix_list = boostpy::extract<boostpy::list>(return_list[0]);
+		if (PyList_Check(data_matrix_list.ptr()) && PyList_Size(return_list.ptr()) == 4)
 		{
-			out_width = boostpy::extract<size_t>(return_List[1]);
-			out_height = boostpy::extract<size_t>(return_List[2]);
-			out_slice = boostpy::extract<size_t>(return_List[3]);
-			/*
-			if (PyList_Size(data_matrix_list.ptr()) != out_width * out_height * out_slice)
-				throw PyErr_NewException("Python return data list size != return list marked size", data_matrix_list.ptr(), main_namespace.ptr());
-			*/
+			out_width = boostpy::extract<size_t>(return_list[1]);
+			out_height = boostpy::extract<size_t>(return_list[2]);
+			out_slice = boostpy::extract<size_t>(return_list[3]);
 
 			T* output_data = new T[out_width * out_height * out_slice];
 			Pylist3D2CArray(data_matrix_list, output_data, out_width, out_height, out_slice);
@@ -520,7 +656,7 @@ void* YapPythonImpl::DoProcess3D(const wchar_t* module_name, const wchar_t * met
 };
 
 template<typename T>
-void* YapPythonImpl::DoProcess4D(const wchar_t* module_name, const wchar_t * method_name,
+void* YapPythonImpl::DoProcess4D(const wchar_t* module, const wchar_t * method,
 	T * data, size_t width, size_t height, size_t slice, size_t time,
 	size_t& out_width, size_t& out_height, size_t& out_slice, size_t &out_time)
 {
@@ -533,22 +669,22 @@ void* YapPythonImpl::DoProcess4D(const wchar_t* module_name, const wchar_t * met
 	{
 		main_module = boostpy::import("__main__");
 		main_namespace = main_module.attr("__dict__");
-		boostpy::object simple = boostpy::exec_file(ToMbs(module_name).c_str(), main_namespace, main_namespace);
-		boostpy::object method = main_namespace[ToMbs(method_name).c_str()];
+		boostpy::object simple = boostpy::exec_file(ToMbs(module).c_str(), main_namespace, main_namespace);
+		boostpy::object func = main_namespace[ToMbs(method).c_str()];
 
 		// convert T* to python list
 		boostpy::list input_matrix_list = CArray2Pylist4D(data, width, height, slice, time);
 
-		boostpy::list return_List = boostpy::extract<boostpy::list>(method(input_matrix_list, width, height, slice, time));
+		boostpy::list return_list = boostpy::extract<boostpy::list>(func(input_matrix_list, width, height, slice, time));
 
 		// convert vector to T* out_data
-		boostpy::list data_matrix_list = boostpy::extract<boostpy::list>(return_List[0]);
-		if (PyList_Check(data_matrix_list.ptr()) && PyList_Size(return_List.ptr()) == 5)
+		boostpy::list data_matrix_list = boostpy::extract<boostpy::list>(return_list[0]);
+		if (PyList_Check(data_matrix_list.ptr()) && PyList_Size(return_list.ptr()) == 5)
 		{
-			out_width = boostpy::extract<size_t>(return_List[1]);
-			out_height = boostpy::extract<size_t>(return_List[2]);
-			out_slice = boostpy::extract<size_t>(return_List[3]);
-			out_time = boostpy::extract<size_t>(return_List[4]);
+			out_width = boostpy::extract<size_t>(return_list[1]);
+			out_height = boostpy::extract<size_t>(return_list[2]);
+			out_slice = boostpy::extract<size_t>(return_list[3]);
+			out_time = boostpy::extract<size_t>(return_list[4]);
 
 			T* output_data = new T[out_width * out_height * out_slice * out_time];
 			Pylist4D2CArray(data_matrix_list, output_data, out_width, out_height, out_slice, out_time);
@@ -569,8 +705,9 @@ void* YapPythonImpl::DoProcess4D(const wchar_t* module_name, const wchar_t * met
 	}
 	return nullptr;
 };
+*/
 
-IYapPython * PythonFactory::GetPython()
+IYapPython2 * PythonFactory::GetPython()
 {
 	return new YapPythonImpl();
 }

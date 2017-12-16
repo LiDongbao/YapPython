@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include <vcruntime.h>
 #include <Python.h>
 #include <iostream>
 #include <boost\python.hpp>
@@ -7,9 +8,9 @@
 #include <boost\python\list.hpp>
 #include <windows.h>
 #include <string>
-#include <vcruntime.h>
+ 
 #include <mutex>
-
+ 
 #include <list>
 #include <vector>
 

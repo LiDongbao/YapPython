@@ -54,8 +54,6 @@ namespace PyDataType {
 
 struct IYapPython
 {
-	virtual void* Process2D(const wchar_t* module_name, const wchar_t* method_name, int data_type,
-		void * data, size_t width, size_t height, size_t& out_width, size_t& out_height) = 0;
 	virtual void* Process3D(const wchar_t* module_name, const wchar_t* method_name, int data_type,
 		void * data, size_t width, size_t height, size_t slice, size_t& out_width,
 		size_t& out_height, size_t& out_slice) = 0;
@@ -64,5 +62,10 @@ struct IYapPython
 		size_t& out_height, size_t& out_slice, size_t& out_time) = 0;
 };
 
+struct IYapPython2
+{
+	virtual void* Process(const wchar_t* module_name, const wchar_t* method_name, int data_type,
+		void * data, size_t dim_count, size_t input_size[], size_t output_size[]) = 0;
+};
 
 #endif

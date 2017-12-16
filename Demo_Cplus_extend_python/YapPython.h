@@ -2,12 +2,12 @@
 #ifndef _YapPython_H__
 #define _YapPython_H__
 
-struct IYapPython;
+struct IYapPython2;
 
 class PythonFactory
 {
 public:
-	static IYapPython * GetPython();
+	static IYapPython2 * GetPython();
 };
 
 #endif // !_YapPython_H__
