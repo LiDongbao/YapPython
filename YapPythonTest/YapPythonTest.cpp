@@ -6,6 +6,7 @@
 #include "..\Demo_Cplus_extend_python\IYapPython.h"
 #include <windows.h>
 #include "..\ReadFolderAllFiles\NiiReader.h"
+#include <vector>
 
 #ifndef OUT
 #define OUT
@@ -62,15 +63,15 @@ void Test2D(IYapPython* python, const wchar_t * module_name,
 {
 	size_t out_width = 0, out_height = 0;
 	size_t image_size = dheight * dwidth;
-	MYTYPE* data = new MYTYPE[image_size];
-	buidData(image_size, data);
-	cout << "\tinput  data:  " << *(data) << " ~ " << *(data + dwidth*dheight - 1) << endl;
+	std::vector<MYTYPE> data(image_size);
+	buidData(image_size, data.data());
+	cout << "\tinput  data:  " << data[0] << " ~ " << data[data.size() - 1] << endl;
 
 	MYTYPE* output_data = reinterpret_cast<MYTYPE*>(
 		python->Process2D(module_name, method_name,
 			data_type_id<MYTYPE>::type, data, dwidth, dheight, out_width, out_height));
 	cout << "\toutput data:  " << *(output_data) << " ~ " << *(output_data + out_width*out_height - 1) << endl;
-	delete[]data;
+
 	delete[]output_data;
 }
 
@@ -153,21 +154,18 @@ void YapPythonTest()
 	auto data = nii_reader->ReadFile(L"D:\\test_data\\003_t2_tse_sag.nii");
 
 	auto dimensions = nii_reader->GetDimensions();
-	size_t width = dimensions[0];
-	size_t height = dimensions[1];
-	size_t slice = dimensions[2];
-	size_t time = dimensions[3];
-	size_t out_width = 0, out_height = 0, out_slice = 0, out_time = 0;
 
-	auto out_data_2d = python->Process2D(L"..\\PythonScripts\\Py2C.py", L"ShowImage2d",
-	DataTypeUnsignedShort, data, width, height, out_width, out_height);
-	auto out_data_3d = python->Process3D(L"..\\PythonScripts\\Py2C.py", L"ShowImage3d",
-	DataTypeUnsignedShort, data, width, height, slice, out_width, out_height, out_slice);
-	auto out_data_4d = python->Process4D(L"..\\PythonScripts\\Py2C.py", L"ShowImage4d",
-	DataTypeUnsignedShort, data, width, height, slice, time,
-	out_width, out_height, out_slice, out_time);
+	size_t input_size[4] = { dimensions[0], dimensions[1], dimensions[2], dimensions[3] };
+	size_t output_size[4] = { 0 };
 
-	return;
+	auto out_data_2d = python->Process(L"..\\PythonScripts\\Py2C.py", L"ShowImage2d",
+	DataTypeUnsignedShort, data, 2, input_size, output_size);
+
+	auto out_data_3d = python->Process(L"..\\PythonScripts\\Py2C.py", L"ShowImage3d",
+	DataTypeUnsignedShort, data, 3, input_size, output_size);
+
+	auto out_data_4d = python->Process(L"..\\PythonScripts\\Py2C.py", L"ShowImage4d",
+		DataTypeUnsignedShort, data, 4, input_size, output_size);
 }
 
 /* Test result:

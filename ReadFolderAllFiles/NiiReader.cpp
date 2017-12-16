@@ -3,8 +3,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
-#include <atlbase.h>
-#include <atlconv.h>
+
 #include <assert.h>
 #include <complex>
 
