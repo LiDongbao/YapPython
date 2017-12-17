@@ -11,6 +11,7 @@
 #include <boost/python/str.hpp>
 #include <comutil.h>
 #include <atlconv.h>
+#include <iostream>
 
 
 using namespace std;
@@ -82,7 +83,7 @@ protected:
 		{
 			*(p++) = T(static_cast<float>(i));
 		}
-		return python.Process2D(module_name, method_name, data_type_id<T>::type, input_data, dwidth, dheight, out_width, out_height);
+		return python.Process(module_name, method_name, data_type_id<T>::type, input_data, dwidth, dheight, out_width, out_height);
 	}
 
 	template<typename T>
@@ -144,7 +145,7 @@ protected:
 		{
 			*(p++) = T(static_cast<float>(i));
 		}
-		return python.Process3D(module_name, method_name, data_type_id<T>::type,
+		return python.Process(module_name, method_name, data_type_id<T>::type,
 			input_data, dwidth, dheight, dslice,
 			out_width, out_height, out_slice);
 	}
@@ -284,3 +285,98 @@ BOOST_AUTO_TEST_CASE(YapPythonTest)
 
 	// system("pause");
 };
+
+
+//////////////////////////////////////////////////////////////////////////
+template<typename MYTYPE>
+void buidData(MYTYPE* data, size_t image_size)
+{
+
+	if (std::is_same<char, MYTYPE>::value)
+	{
+		for (int i = 0; i < image_size; ++i)
+			data[i] = unsigned char(int(i % 127));
+	}
+	else if (std::is_same<unsigned char, MYTYPE>::value)
+	{
+		for (int i = 0; i < image_size; ++i)
+			data[i] = unsigned char(int(i % 255));
+	}
+	else if (std::is_same<bool, MYTYPE>::value)
+	{
+		for (int i = 0; i < image_size; ++i)
+			data[i] = MYTYPE(i % 2);
+	}
+	for (int i = 0; i < image_size; ++i)
+		data[i] = MYTYPE(i);
+}
+
+template<typename MYTYPE>
+void Test(IYapPython* python, const wchar_t * module_name,
+	const wchar_t * method_name, size_t dimension_size, size_t input_size[])
+{
+	size_t output_size[4] = { 0 };
+	size_t input_image_size = 1;
+	for (size_t i = 0; i < dimension_size; ++i)
+	{
+		input_image_size *= input_size[i];
+	}
+	//	std::vector<MYTYPE> input_data(input_image_size);
+	MYTYPE* input_data = new  MYTYPE[input_image_size];
+	buidData(input_data, input_image_size);
+	cout << "\tinput  data:  " << input_data[0] << " ~ " << input_data[input_image_size - 1] << endl;
+
+	MYTYPE* output_data = reinterpret_cast<MYTYPE*>(python->Process(module_name, method_name,
+		data_type_id<MYTYPE>::type, input_data, 2, input_size, output_size));
+	size_t output_image_size = 1;
+	for (size_t i = 0; i < dimension_size; ++i)
+	{
+		output_image_size *= output_size[i];
+	}
+	cout << "\toutput data:  " << *(output_data) << " ~ " << *(output_data + output_image_size - 1) << endl;
+
+	delete[]output_data;
+}
+/* Test result:
+2D: Pass: bool, double, float, int, unsigned int, short, unsigned short, unsigned char, char, complex<float>, complex<double>. Failed: None type.
+3D: Pass: bool, double, float, int, unsigned int, short, unsigned short, unsigned char, char, complex<float>, complex<double>. Failed: None type.
+4D: Pass: bool, double, float, int, unsigned int, short, unsigned short, unsigned char, char, complex<float>, complex<double>. Failed: None type.
+*/
+void AllDimensionAllTypeTest()
+{
+	using namespace std;
+	auto _module = ::LoadLibrary(L"..\\x64\\Debug\\YapPythonDll.dll");
+	if (!_module)
+	{
+		cout << "Error loading YapPythonDll.dll.\n";
+		return ;
+	}
+
+	auto get_yap_python_func = (IYapPython*(*)())::GetProcAddress(_module, "GetYapPython");
+	if (get_yap_python_func == nullptr)
+	{
+		cout << "Cannot find GetYapPython() in YapPythonDLL.dll.\n";
+		return ;
+	}
+	IYapPython* python = get_yap_python_func();
+	const wchar_t* function_2d = L"test2d";
+	size_t input_size[4] = { 32, 32, 10, 4 };
+	cout << "\t\t== test2d ==" << endl;
+	cout << "unsigned int	" << endl; Test<unsigned int	>(python, L"..\\PythonScripts\\Py2C.py", function_2d, 2, input_size);
+	cout << "char			" << endl; Test<char			>(python, L"..\\PythonScripts\\Py2C.py", function_2d, 2, input_size);
+	cout << "unsigned char	" << endl; Test<unsigned char	>(python, L"..\\PythonScripts\\Py2C.py", function_2d, 2, input_size);
+	cout << "int			" << endl; Test<int				>(python, L"..\\PythonScripts\\Py2C.py", function_2d, 2, input_size);
+
+	const wchar_t* function_3d = L"test3d";
+	cout << "\t\t== test3d ==" << endl;
+	cout << "float			" << endl; Test<float			>(python, L"..\\PythonScripts\\Py2C.py", function_3d, 3, input_size);
+	cout << "double			" << endl; Test<double			>(python, L"..\\PythonScripts\\Py2C.py", function_3d, 3, input_size);
+	cout << "short			" << endl; Test<short			>(python, L"..\\PythonScripts\\Py2C.py", function_3d, 3, input_size);
+	cout << "unsigned short	" << endl; Test<unsigned short	>(python, L"..\\PythonScripts\\Py2C.py", function_3d, 3, input_size);
+
+	const wchar_t * function_4d = L"test4d";
+	cout << "\t\t== test4d ==" << endl;
+	cout << "bool			" << endl; Test<bool			>(python, L"..\\PythonScripts\\Py2C.py", function_4d, 4, input_size);
+	cout << "complex<float>	" << endl; Test<complex<float>	>(python, L"..\\PythonScripts\\Py2C.py", function_4d, 4, input_size);
+	cout << "complex<double>" << endl; Test<complex<double>	>(python, L"..\\PythonScripts\\Py2C.py", function_4d, 4, input_size);
+}

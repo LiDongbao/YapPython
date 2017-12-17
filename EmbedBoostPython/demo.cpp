@@ -8,33 +8,21 @@
 #include <boost\python\list.hpp>
 #include <windows.h>
 #include <string>
- 
+#include <stdlib.h>
 #include <mutex>
  
 #include <list>
 #include <vector>
 
-template<typename T>
-inline std::vector<T> to_std_vector(const boost::python::object& iterable)
+std::string ToMbs(const wchar_t * wcs)
 {
-	return std::vector<T>(boost::python::stl_input_iterator<T>(iterable),
-		boost::python::stl_input_iterator<T>());
-}
+	assert(wcslen(wcs) < 500 && "The string cannot contain more than 500 characters.");
 
-template<typename T>
-std::list<T> Pylist2D2list(const boost::python::object& iterable,int width,int height)
-{
-	using namespace boost::python;
-	std::list<T> out_list;
-	assert(len(iterable) == height && len(extract<boost::python::list>(iterable[0])) == width);
-	for (int iter = 0; iter < height; ++iter)
-	{
-		for (int inner = 0; inner < width; ++inner)
-		{
-			out_list.push_back(extract<T>(iterable[iter][inner]));
-		}
-	}
-	return out_list;
+	static char buffer[1024];
+	size_t size;
+
+	wcstombs_s(&size, buffer, (size_t)1024, wcs, (size_t)1024);
+	return std::string(buffer);
 }
 
 int runPythonScript()
@@ -77,11 +65,7 @@ int runPythonScript()
 		std::cout << "Python has caculated getsomething as: ";
 		
 		// std::vector<char> my_vect = to_std_vector<char>(retList1);
-		std::list<int> my_list = Pylist2D2list<int>(retList1,4,4);
-		for (auto iter : my_list)
-		{
-			std::cout << "\t" << iter;
-		}
+		// std::list<int> my_list = Pylist2D2list<int>(retList1,4,4);
 		
 		/*
 		// extract 可以直接提取Python值，可以运行Python函数
@@ -443,20 +427,7 @@ void RemoveName(string* st) {
 	delete st;
 }
 
-int main()
-{
-	// another_main();
-	runPythonScript();
-	// ReadTxtFile();
-	// return loadDll();
-	// uint64_t tmp = ntohll()
-	// Item3Test();
-	// EffectiveC_Chapter2();
-	// countWord();
-	// didit();
-	// EffectiveC_Chapter3();
-	
-	int a = 12;
+void DemoMutex() {
 	string * my_name = new string("Doron");
 	shared_ptr<string> name_ptr;
 	name_ptr.reset(my_name, RemoveName);
@@ -467,8 +438,25 @@ int main()
 	use_mutex->try_lock();
 	use_mutex->unlock();
 	shared_ptr<Name>(new Name("Doron"));
+}
+
+int main()
+{
+	// another_main();
+	// runPythonScript();
+	// ReadTxtFile();
+	// return loadDll();
+	// uint64_t tmp = ntohll()
+	// Item3Test();
+	// EffectiveC_Chapter2();
+	// countWord();
+	// didit();
+	// EffectiveC_Chapter3();
+	// DemoMutex();
+
+	const wchar_t * wcs = L"Doron Lee";
+	std::string my_string = ToMbs(wcs);
+	std::cout << my_string.data() << std::endl;
 	std::system("pause");
 	return 1;
 }
-
-

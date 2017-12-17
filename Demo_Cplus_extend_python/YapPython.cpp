@@ -35,10 +35,9 @@ std::string ToMbs(const wchar_t * wcs)
 	assert(wcslen(wcs) < 500 && "The string cannot contain more than 500 characters.");
 
 	static char buffer[1024];
+	size_t size;
 
-#pragma warning(once:4996)
-	wcstombs(buffer, wcs, 1024);//wcstombs_s(wcs,buffer,1024);
-
+	wcstombs_s(&size, buffer, (size_t)1024, wcs, (size_t)1024);
 	return std::string(buffer);
 }
 
@@ -166,7 +165,7 @@ protected:
 			reversed_size[i] = size[dimension_count - i - 1];
 		}
 
-		return DoCArray2Pylist(p, dimension_count, reversed_size);
+		return DoCArray2Pylist(p, dimension_count, reversed_size.data());
 	}
 
 	/*convert 1D array to python 2D list*/
