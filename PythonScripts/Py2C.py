@@ -6,23 +6,13 @@ import matplotlib
 This is Module Py2C for c++
 """
 
-class A: pass
-
-# this method show 2D-in-format-1D image
 def ShowImage(image, width, height):
-    img = [[]] * height
-    img_img = [[]] * height
+    print('Invoking Method: [ShowImage]')
     if type(image[0]) is type(1+2j):
-        for x in range(height):
-            for y in range(width):
-                img[x] = img[x] + [image[x * width + y].real]
-        for x in range(height):
-            for y in range(width):
-                img_img[x] = img_img[x] + [image[x * width + y].imag]
+         img = image.real
+         img_img = image.imag
     else:
-        for x in range(height):
-            for y in range(width):
-                img[x] = img[x] + [image[x * width + y]]
+        img = image
     if (len(img_img[0]) != 0):
         npimg = np.array(img)
         npimg = npimg / npimg.max() *255
@@ -34,23 +24,7 @@ def ShowImage(image, width, height):
     pil_image.show()
     width = len(img)
     height = len(img[0])
-    print('Invoking Method: [ShowImage]')
     return [image,width,height]
-
-def ShowComplexImage(image, width, height):
-        img = [[]] * width
-        if type(image[0]) is type(1+2j):
-                for x in range(width):
-                        for y in range(height):
-                                img[x] = img[x] + [ image[x * width + y].real ]
-        print(img)
-        width = len(img)
-        height = len(img[0])
-        return [image, width, height]
-
-def ShowCharImage(image, width, height):
-        print(image[0],image[width*height-1])
-        return [image, width, height]
 
 
 ## image is 2d list
@@ -98,32 +72,25 @@ def ShowImage4d(image,width,height,slice,time):
 ## test for 2d
 def test2d(image, width, height):
         # print('Invoking Method: [test2d].')
-        print('\tpython rang: ',image[0][0],'~', image[height-1][width-1],'\t\t\t\t',width,height)
+        # print('\tpython rang: ',image[0][0],'~', image[height-1][width-1],'\t\t\t\t',width,height)
         return [image, width, height]
 
 ## test for 3d
 def test3d(image, width, height, slice):
         # print('Invoking Method: [test3d].')
-        print('\tpython rang: ',image[0][0][0],'~', image[slice-1][height-1][width-1],'\t\t\t\t',width,height,slice)
+        # print('\tpython rang: ',image[0][0][0],'~', image[slice-1][height-1][width-1],'\t\t\t\t',width,height,slice)
         return [image, width, height, slice]
 
 ## test for 4d
 def test4d(image,width,height, slice, time):
         # print('Invoking Method: [test4d].')
-        print('\tpython rang: ',image[0][0][0][0],'~', image[time-1][slice-1][height-1][width-1],'\t\t\t\t',width,height,slice,time)
+        # print('\tpython rang: ',image[0][0][0][0],'~', image[time-1][slice-1][height-1][width-1],'\t\t\t\t',width,height,slice,time)
         return [image, width, height, slice, time]
 
 '''
 # if __name__=='__main__':
 #         print('############################################################')
-#         doNothing()
-#         width = 256
-#         height = 256
-#         li = [i for i in range(width*height)]
-#         image = ShowImage(li, width, height)
 #         #li2d = [[i for j in range(height)] for i in range(width)] # *width+j)*255/(width*height)
 #         #image2d = ShowImage2D(li2d,width, height)
-#         p = Py4C()
-#         p.ShowImage3D(image, width, height, 1)
 #         print('############################################################')
 '''

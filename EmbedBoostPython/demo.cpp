@@ -4,6 +4,7 @@
 #include <iostream>
 #include <boost\python.hpp>
 #include <boost\python\stl_iterator.hpp>
+#include <boost\python\list.hpp>
 #include "..\ReadFolderAllFiles\NiiReader.h"
 #include <boost\python\list.hpp>
 #include <windows.h>
@@ -33,20 +34,12 @@ int runPythonScript()
 	if (!Py_IsInitialized())
 		return -1;
 
-	bpy::object mainModule;
-	bpy::object mainNamespace;
 	try
 	{
-		mainModule = bpy::import("__main__");
-		mainNamespace = mainModule.attr("__dict__");
+		bpy::object mainModule = bpy::import("__main__");
+		bpy::object mainNamespace = mainModule.attr("__dict__");
 		bpy::object simple = bpy::exec_file("D:\\demoPython\\example.py", mainNamespace, mainNamespace);
 		/*
-		// 使用boost.python方式获得方法并运行
-		bpy::object foo = mainNamespace["foo"];
-		string val = bpy::extract<string>(foo("did nothing return source value"));
-		bpy::object add = mainNamespace["add"];
-		int url = bpy::extract<int>(add(12));
-		bpy::object getsomething = mainNamespace["getsomething"];
 		bpy::list retList = bpy::extract<bpy::list>(getsomething());
 		*/
 
@@ -62,23 +55,10 @@ int runPythonScript()
 		outside_list.append(inside_list);
 		bpy::object dosomething = mainNamespace["dosomething"];
 		bpy::object retList1 = bpy::extract<bpy::list>(dosomething(outside_list));
-		std::cout << "Python has caculated getsomething as: ";
-		
-		// std::vector<char> my_vect = to_std_vector<char>(retList1);
-		// std::list<int> my_list = Pylist2D2list<int>(retList1,4,4);
-		
-		/*
-		// extract 可以直接提取Python值，可以运行Python函数
-		// exec, eval, extract<>() e.t. method using example.
-		bpy::object main_module = import("__main__");
-		bpy::object main_namespace = main_module.attr("__dict__");
-		bpy::object ignored = exec("result = 2**10", main_namespace, main_namespace);
-		int onekilo = extract<int>(main_namespace["result"]);
-		printf("%d\n", onekilo);
-		object result = eval("2**10",main_namespace);
-		int onekilo_ = extract<int>(result);
-		printf("%d\n", onekilo_);
-		*/
+		bpy::list out_data_list = bpy::extract<bpy::list>(retList1[0]);
+		int width = bpy::extract<int>(retList1[1]);
+		int height = bpy::extract<int>(retList1[2]);
+
 	}
 	catch (...)
 	{
@@ -454,9 +434,15 @@ int main()
 	// EffectiveC_Chapter3();
 	// DemoMutex();
 
-	const wchar_t * wcs = L"Doron Lee";
-	std::string my_string = ToMbs(wcs);
-	std::cout << my_string.data() << std::endl;
+	vector<string> vec;
+	vec.push_back("C++");
+	vec.push_back("Java");
+	vec.push_back("PHP");
+	string * ptr = vec.data();
+	for (size_t i = 0; i < vec.size(); ++i)
+	{
+		std::cout << *(ptr++) << std::endl;
+	}
 	std::system("pause");
 	return 1;
 }

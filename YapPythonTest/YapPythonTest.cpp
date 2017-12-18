@@ -61,11 +61,11 @@ void YapPythonTest()
 	size_t input_size[4] = { dimensions[0], dimensions[1], dimensions[2], dimensions[3] };
 	size_t output_size[4] = { 0 };
 
-	auto out_data_2d = python->Process(L"..\\PythonScripts\\Py2C.py", L"ShowImage2d",
-	DataTypeUnsignedShort, data, 2, input_size, output_size);
-
-	auto out_data_3d = python->Process(L"..\\PythonScripts\\Py2C.py", L"ShowImage3d",
-	DataTypeUnsignedShort, data, 3, input_size, output_size);
+	// auto out_data_2d = python->Process(L"..\\PythonScripts\\Py2C.py", L"ShowImage2d",
+	// DataTypeUnsignedShort, data, 2, input_size, output_size);
+	// 
+	// auto out_data_3d = python->Process(L"..\\PythonScripts\\Py2C.py", L"ShowImage3d",
+	// DataTypeUnsignedShort, data, 3, input_size, output_size);
 
 	auto out_data_4d = python->Process(L"..\\PythonScripts\\Py2C.py", L"ShowImage4d",
 		DataTypeUnsignedShort, data, 4, input_size, output_size);

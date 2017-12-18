@@ -24,6 +24,7 @@
 #include <boost/python/import.hpp>
 #include <boost/python/stl_iterator.hpp>
 #include <vcruntime.h>
+#include <iostream>
 
 //#pragma warning(pop)
 
@@ -81,6 +82,25 @@ public:
 	}
 
 protected:
+	/*
+	template<typename T>
+	void pylist2Array(const boostpy::object& iterable, T *& out_data, size_t size[])
+	{
+		T * source_data = std::vector<T>(boostpy::stl_input_iterator<T>(iterable),
+			boostpy::stl_input_iterator<T>()).data();
+		memcpy(out_data, source_data, (size_t)(size[0] * sizeof(T)));
+		// out_data = out_data + (size_t)(size[0] * sizeof(T));
+	}
+	template<>
+	void pylist2Array(const boostpy::object& iterable, bool *& out_data, size_t size[])
+	{
+		for (size_t i = 0; i < size_t(boostpy::len(iterable)); ++i)
+		{
+			*(out_data++) = boostpy::extract<bool>(iterable[i]);
+		}
+	}
+	*/
+
 	size_t GetTotalSize(size_t dimension_count, size_t size[])
 	{
 		size_t total_size = 1;
@@ -91,7 +111,7 @@ protected:
 
 		return total_size;
 	}
-
+	
 	template<typename T>
 	void* DoProcess(const wchar_t* module, const wchar_t* method,
 		T * data, size_t dim_count, size_t input_size[], size_t output_size[])
@@ -101,8 +121,8 @@ protected:
 
 		try
 		{
-			auto main_module = boostpy::import("__main__");
-			auto main_namespace = main_module.attr("__dict__");
+			boostpy::object main_module = boostpy::import("__main__");
+			boostpy::object main_namespace = main_module.attr("__dict__");
 			boostpy::object simple = boostpy::exec_file(ToMbs(module).c_str(), main_namespace, main_namespace);
 			boostpy::object func = main_namespace[ToMbs(method).c_str()];
 
@@ -136,7 +156,7 @@ protected:
 
 				T* output_data = new T[GetTotalSize(dim_count, output_size)];
 				Pylist2CArray(out_data_list, output_data, dim_count, output_size);
-
+				
 				return output_data;
 			}
 			else
@@ -144,13 +164,10 @@ protected:
 				return nullptr;
 			}
 		}
-		catch (...)
+		catch (boostpy::error_already_set const&)
 		{
-			if (PyErr_Occurred())
-			{
-				PyErr_Print();
-				PyErr_Clear();
-			}
+			PyErr_Print();
+			PyErr_Clear();
 		}
 		return nullptr;
 	};
@@ -194,9 +211,19 @@ protected:
 	void YapPythonImpl::Pylist2CArray(const boostpy::list& li, T* out_data, size_t dimension_count, size_t size[])
 	{
 		T* p = out_data;
-		DoPylist2CArray(li, p, dimension_count, size);
+		size_t * reversed_size = new size_t[4];
+		// vector<size_t> reversed_size(dimension_count);
+		for (size_t i = 0; i < dimension_count; ++i)
+		{
+			reversed_size[i] = size[dimension_count - i - 1];
+		}
+
+		DoPylist2CArray(li, p, dimension_count, reversed_size);
 	}
 
+	/*
+	use function:[ pylist2Vector ] to convert pylist to vector, then memory allocate to c++ array.
+	*/
 	template<typename T>
 	void YapPythonImpl::DoPylist2CArray(const boostpy::list& li, T*& out_data, size_t dim_count, size_t size[])
 	{
@@ -206,7 +233,7 @@ protected:
 		{
 			for (size_t i = 0; i < size[0]; ++i)
 			{
-				*out_data++ = boostpy::extract<T>(li[i]);
+				*(out_data++) = boostpy::extract<T>(li[i]);
 			}
 		}
 		else
