@@ -54,21 +54,24 @@ void YapPythonTest()
 {
 	auto python = LoadPythonDll();
 	auto nii_reader = LoadNiiDll();
-	auto data = nii_reader->ReadFile(L"D:\\test_data\\003_t2_tse_sag.nii");
+	auto t1ce_data = nii_reader->ReadFile(L"D:\\test_data\\Brats17_2013_11_1_t1ce.nii");
+	auto roi_data = nii_reader->ReadFile(L"D:\\test_data\\Brats17_2013_11_1_seg.nii");
 
 	auto dimensions = reinterpret_cast<size_t*>(nii_reader->GetDimensions());
 
 	size_t input_size[4] = { dimensions[0], dimensions[1], dimensions[2], dimensions[3] };
-	size_t output_size[4] = { 0 };
+	size_t output_dimensions = 0;
+	size_t output_size[10] = { 0 };
 
 	// auto out_data_2d = python->Process(L"..\\PythonScripts\\Py2C.py", L"ShowImage2d",
-	// DataTypeUnsignedShort, data, 2, input_size, output_size);
+	// DataTypeUnsignedShort, 2, data, output_dimensions, input_size, output_size);
 	// 
 	// auto out_data_3d = python->Process(L"..\\PythonScripts\\Py2C.py", L"ShowImage3d",
-	// DataTypeUnsignedShort, data, 3, input_size, output_size);
+	// DataTypeUnsignedShort, 3, data, output_dimensions, input_size, output_size);
 
-	auto out_data_4d = python->Process(L"..\\PythonScripts\\Py2C.py", L"ShowImage4d",
-		DataTypeUnsignedShort, data, 4, input_size, output_size);
+	auto out_data = python->Process(L"..\\PythonScripts\\demo_test.py", L"test_radiomics",
+		DataTypeUnsignedShort, 3, t1ce_data, roi_data, output_dimensions, input_size, output_size);
+	std::cout << "output data dimension: " << output_dimensions << std::endl;
 }
 
 int main()

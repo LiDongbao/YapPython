@@ -59,11 +59,11 @@ T * CreateData(size_t dimension_count, size_t input_size[])
 }
 
 template<typename T> 
-T * GetReturnData(T * input_data, IYapPython &python, const wchar_t* module_name, const wchar_t* method_name,
-	size_t dimension_count, size_t input_size[], size_t output_size[])
+T * GetReturnData(IYapPython &python, const wchar_t* module_name, const wchar_t* method_name, size_t input_dimensions, 
+	T * input_data, size_t &output_dimensions, size_t input_size[], size_t output_size[])
 {
-	auto return_list = python.Process(module_name, method_name,
-		data_type_id<T>::type, input_data, dimension_count, input_size, output_size);
+	void* return_list = python.Process(module_name, method_name,
+		data_type_id<T>::type, input_dimensions, input_data, output_dimensions, input_size, output_size);
 	assert(return_list != nullptr);
 	return reinterpret_cast<T*>(return_list);
 }
@@ -79,45 +79,97 @@ IYapPython * GetPython()
 }
 
 ////////////// prepare data
-size_t input_size[4] = { 10,10,50,50 };
+size_t input_size[4] = { 10,11,12,13 };
 size_t output_size[4] = { 0 };
+size_t output_dimensions = 0;
 IYapPython *python = GetPython();
 
 // bool, complex<float>, complex<double>
-typedef boost::mpl::list<int, unsigned int, short, unsigned short, double, float, char, unsigned char> test_types;
+typedef boost::mpl::list<int, unsigned int, short, unsigned short, double, float, char, unsigned char, bool> test_types;
+
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(test_1D_python, T, test_types)
+{
+	size_t input_dims = 1;
+	auto in_data = CreateData<T>(input_dims, input_size);
+	auto out_data = GetReturnData<T>(*python, L"D:\\Projects\\Demo_Cplus_extend_python\\PythonScripts\\Py2C.py",
+		L"test1d", input_dims, in_data, output_dimensions, input_size, output_size);
+
+	for (size_t i = 0; i < GetTotalSize(input_dims, input_size); ++i)
+	{
+		BOOST_TEST(in_data[i] == out_data[i]);
+	}
+	for (size_t i = 0; i < input_dims; ++i)
+	{
+		BOOST_TEST(input_size[i] == output_size[i]);
+	}
+}
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_2D_python, T, test_types)
 {
-	auto in_data = CreateData<T>(2, input_size);
-	auto out_data = GetReturnData<T>(in_data, *python, L"D:\\Projects\\Demo_Cplus_extend_python\\PythonScripts\\Py2C.py", L"test2d", 2, input_size, output_size);
+	size_t input_dims = 2;
+	auto in_data = CreateData<T>(input_dims, input_size);
+	auto out_data = GetReturnData<T>(*python, L"D:\\Projects\\Demo_Cplus_extend_python\\PythonScripts\\Py2C.py",
+		L"test2d", input_dims, in_data, output_dimensions, input_size, output_size);
 
-	for (size_t i = 0; i < GetTotalSize(2, input_size); ++i)
+	for (size_t i = 0; i < GetTotalSize(input_dims, input_size); ++i)
 	{
 		BOOST_TEST(in_data[i] == out_data[i]);
+	}
+	for (size_t i = 0; i < input_dims; ++i)
+	{
+		BOOST_TEST(input_size[i] == output_size[i]);
 	}
 }
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_3D_python, T, test_types)
 {
-	auto in_data = CreateData<T>(3, input_size);
-	auto out_data = GetReturnData<T>(in_data, *python, L"D:\\Projects\\Demo_Cplus_extend_python\\PythonScripts\\Py2C.py", L"test3d", 3, input_size, output_size);
+	size_t input_dims = 3;
+	auto in_data = CreateData<T>(input_dims, input_size);
+	auto out_data = GetReturnData<T>(*python, L"D:\\Projects\\Demo_Cplus_extend_python\\PythonScripts\\Py2C.py", 
+		L"test3d", input_dims, in_data, output_dimensions, input_size, output_size);
 
-	for (size_t i = 0; i < GetTotalSize(3, input_size); ++i)
+	for (size_t i = 0; i < GetTotalSize(input_dims, input_size); ++i)
 	{
 		BOOST_TEST(in_data[i] == out_data[i]);
+	}
+	for (size_t i = 0; i < input_dims; ++i)
+	{
+		BOOST_TEST(input_size[i] == output_size[i]);
 	}
 }
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(test_4D_python, T, test_types)
 {
-	auto in_data = CreateData<T>(4, input_size);
-	auto out_data = GetReturnData<T>(in_data, *python, L"D:\\Projects\\Demo_Cplus_extend_python\\PythonScripts\\Py2C.py", L"test4d", 4, input_size, output_size);
+	size_t input_dims = 4;
+	auto in_data = CreateData<T>(input_dims, input_size);
+	auto out_data = GetReturnData<T>(*python, L"D:\\Projects\\Demo_Cplus_extend_python\\PythonScripts\\Py2C.py", 
+		L"test4d", input_dims, in_data, output_dimensions, input_size, output_size);
 
-	for (size_t i = 0; i < GetTotalSize(4, input_size); ++i)
+	for (size_t i = 0; i < GetTotalSize(input_dims, input_size); ++i)
 	{
 		BOOST_TEST(in_data[i] == out_data[i]);
 	}
+	for (size_t i = 0; i < input_dims; ++i)
+	{
+		BOOST_TEST(input_size[i] == output_size[i]);
+	}
 }
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(test_3D_2D_python, T, test_types)
+{
+	size_t input_dims = 3;
+	auto in_data = CreateData<T>(input_dims, input_size);
+	auto out_data = GetReturnData<T>(*python, L"D:\\Projects\\Demo_Cplus_extend_python\\PythonScripts\\Py2C.py",
+		L"test3d2d", input_dims, in_data, output_dimensions, input_size, output_size);
+	// get 1st slice, so the output_data == input_data[0:output_size]
+	for (size_t i = 0; i < GetTotalSize(output_dimensions, input_size); ++i)
+	{
+		BOOST_TEST(in_data[i] == out_data[i]);
+	}
+	BOOST_TEST(output_dimensions == 2);
+}
+
 
 BOOST_AUTO_TEST_CASE(test_stop)
 {

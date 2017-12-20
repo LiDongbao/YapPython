@@ -69,23 +69,34 @@ def ShowImage4d(image,width,height,slice,time):
             pil_image.show()
         return [image, width, height, slice, time]
 
+## test for 1d
+def test1d(image, width):
+        # print('Invoking Method: [test2d].')
+        # print('\tpython rang: ',image[0][0],'~', image[height-1][width-1],'\t\t\t\t',width,height)
+        return [1, image, width]
+
 ## test for 2d
 def test2d(image, width, height):
         # print('Invoking Method: [test2d].')
         # print('\tpython rang: ',image[0][0],'~', image[height-1][width-1],'\t\t\t\t',width,height)
-        return [image, width, height]
+        return [2, image, width, height]
 
 ## test for 3d
 def test3d(image, width, height, slice):
         # print('Invoking Method: [test3d].')
         # print('\tpython rang: ',image[0][0][0],'~', image[slice-1][height-1][width-1],'\t\t\t\t',width,height,slice)
-        return [image, width, height, slice]
+        return [3, image, width, height, slice]
 
 ## test for 4d
 def test4d(image,width,height, slice, time):
         # print('Invoking Method: [test4d].')
         # print('\tpython rang: ',image[0][0][0][0],'~', image[time-1][slice-1][height-1][width-1],'\t\t\t\t',width,height,slice,time)
-        return [image, width, height, slice, time]
+        return [4, image, width, height, slice, time]
+
+## test for input 3d, output 2d
+def test3d2d(image, width, height, slice):
+        image = np.array(image)[0].tolist()
+        return [2, image, width, height]
 
 '''
 # if __name__=='__main__':

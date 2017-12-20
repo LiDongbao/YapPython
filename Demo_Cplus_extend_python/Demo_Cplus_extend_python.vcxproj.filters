@@ -42,4 +42,7 @@
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\PythonScripts\demo_test.py" />
+  </ItemGroup>
 </Project>

@@ -55,7 +55,9 @@ namespace PyDataType {
 struct IYapPython
 {
 	virtual void* Process(const wchar_t* module_name, const wchar_t* method_name, int data_type,
-		void * data, size_t dim_count, size_t input_size[], size_t output_size[]) = 0;
+		size_t input_dimensions, void * data, size_t &output_dimensions,size_t input_size[], size_t output_size[]) = 0;
+	virtual void* Process(const wchar_t* module_name, const wchar_t* method_name, int data_type,
+		size_t input_dimensions, void * data1, void* data2, size_t &output_dimensions, size_t input_size[], size_t output_size[]) = 0;
 };
 
 #endif
