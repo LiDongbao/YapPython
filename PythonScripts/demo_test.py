@@ -34,4 +34,4 @@ def test_radiomics(image, roi, width,height,slice):
     for fn in features.keys():
         print("Compute %s : %s" %(fn,features[fn]))
     image = np.array(image)[0].tolist()
-    return [image, width, height]
+    return [2, image, width, height]
