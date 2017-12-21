@@ -98,6 +98,9 @@ def test3d2d(image, width, height, slice):
         image = np.array(image)[0].tolist()
         return [2, image, width, height]
 
+def test3d2image(image1,image2, width,height,slice):
+        return [3, image1, width, height, slice]
+
 '''
 # if __name__=='__main__':
 #         print('############################################################')

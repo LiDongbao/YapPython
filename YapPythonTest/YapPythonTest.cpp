@@ -69,8 +69,10 @@ void YapPythonTest()
 	// auto out_data_3d = python->Process(L"..\\PythonScripts\\Py2C.py", L"ShowImage3d",
 	// DataTypeUnsignedShort, 3, data, output_dimensions, input_size, output_size);
 
+	python->SetRefData(roi_data, DataTypeUnsignedShort);
 	auto out_data = python->Process(L"..\\PythonScripts\\demo_test.py", L"test_radiomics",
-		DataTypeUnsignedShort, 3, t1ce_data, roi_data, output_dimensions, input_size, output_size);
+		DataTypeUnsignedShort, 3, t1ce_data, output_dimensions, input_size, output_size,true);
+	python->DeleteRefData();
 	std::cout << "output data dimension: " << output_dimensions << std::endl;
 }
 

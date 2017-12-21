@@ -5,6 +5,11 @@
 #include <complex>
 #include <map>
 
+#ifndef OUT
+#define OUT
+#endif
+
+const int DataUnknown = 0x00000000;				///< unknown type
 const int DataTypeChar = 0x00000001;			///< char (1 byte)
 const int DataTypeUnsignedChar = 0x00000002;	///< unsigned char (1 byte)
 const int DataTypeShort = 0x00000004;			///< short (2 bytes)
@@ -55,9 +60,11 @@ namespace PyDataType {
 struct IYapPython
 {
 	virtual void* Process(const wchar_t* module_name, const wchar_t* method_name, int data_type,
-		size_t input_dimensions, void * data, size_t &output_dimensions,size_t input_size[], size_t output_size[]) = 0;
-	virtual void* Process(const wchar_t* module_name, const wchar_t* method_name, int data_type,
-		size_t input_dimensions, void * data1, void* data2, size_t &output_dimensions, size_t input_size[], size_t output_size[]) = 0;
+		size_t input_dimensions, void * data, OUT size_t &output_dimensions,size_t input_size[], 
+		OUT size_t output_size[],bool is_need_ref_data=0) = 0;
+
+	virtual void SetRefData(void *& roi_data, int32_t data_type) = 0;
+	virtual void DeleteRefData() = 0;
 };
 
 #endif
