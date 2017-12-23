@@ -9,34 +9,32 @@
 
 #pragma warning(disable:4996)
 
-#define LOADDATA(file,typename_,byte_count,data_size) \
-{	\
-	typename_* data;\
-	try{\
-		data = new  typename_[data_size];\
-	}\
-	catch(std::bad_alloc&)\
-	{\
-		return (void*)nullptr; \
-	}\
-	if (!file.read(reinterpret_cast<char*>(data), data_size * sizeof(typename_))) \
-	{	\
-		delete[]data; \
-		return (void*)nullptr; \
-	}	\
-	else \
-	{	\
-		if (!_is_system_endian_same_data) \
-		{	\
-			SwapByteOrder(reinterpret_cast<void*>(data),byte_count,data_size);\
-		}	\
-		return reinterpret_cast<void*>(data); \
-	}	\
+template<typename T>
+void * NiiReader::LoadData(ifstream & file, size_t byte_count, size_t data_size)
+{
+	T * data;
+	try
+	{
+		data = new  T[data_size];
+	}
+	catch (const std::bad_alloc&)
+	{
+		return (void*)nullptr;
+	}
+	if (!file.read(reinterpret_cast<char*>(data), data_size* sizeof(T)))
+	{
+		delete[] data;
+		return (void*)nullptr;
+	}
+	else
+	{
+		if (!_is_system_endian_same_data)
+		{
+			SwapByteOrder(reinterpret_cast<void*>(data), byte_count, data_size);
+		}
+		return reinterpret_cast<void*>(data);
+	}
 }
-
-#define LOAD(file,typename_,byte_count,data_size) LOADDATA(file,typename_,byte_count,data_size)
-
-// #define LOAD(file,typename_,data_size) LOADDATA(file,typename_,data_size)
 
 using namespace std;
 
@@ -414,35 +412,49 @@ void * NiiReader::ReadData(ifstream &file, short datatype)
 	switch (datatype)
 	{
 	case TYPE_BOOL:
-		LOAD(file, bool , 1 , data_size);
+		LoadData<bool>(file, 1 , data_size);
+		break;
 	case TYPE_UNSIGNEDCHAR:
-		LOAD(file, unsigned char, 1 , data_size);
+		LoadData<unsigned char>(file, 1, data_size);
+		break;
 	case TYPE_SHORT:
-		LOAD(file, short, 2, data_size);
+		LoadData<short>(file, 2, data_size);
+		break;
 	case TYPE_INT:
-		LOAD(file, int, 4, data_size);
+		LoadData<int>(file, 4, data_size);
+		break;
 	case TYPE_FLOAT:
-		LOAD(file, float ,4 , data_size);
+		LoadData<float>(file, 4, data_size);
+		break;
 	case TYPE_COMPLEX:
-		LOAD(file, complex<float>, 4, data_size*2);
+		LoadData<complex<float>>(file, 4, data_size * 2);
+		break;
 	case TYPE_DOUBLE:
-		LOAD(file, double, 8, data_size);
+		LoadData<double>(file, 8, data_size);
+		break;
 	case TYPE_RGB:
 		// rgb & rgba use unsigned char to store，虽然rgb是3字节，
 		// 但是因为在_dimensions中已经保存了数据的rgb值信息，所以不许需要做特殊处理
-		LOAD(file, unsigned char,1 , data_size);
+		LoadData<unsigned char>(file, 1, data_size);
+		break;
 	case TYPE_RGBA:
-		LOAD(file, unsigned char, 1 , data_size);
+		LoadData<unsigned char>(file, 1, data_size);
+		break;
 	case TYPE_CHAR:
-		LOAD(file, char, 1, data_size);
+		LoadData<char>(file, 1, data_size);
+		break;
 	case TYPE_UNSIGNEDSHORT:
-		LOAD(file, unsigned short,2 , data_size);
+		LoadData<unsigned short>(file, 2, data_size);
+		break;
 	case TYPE_UNSIGNEDINT:
-		LOAD(file, unsigned int, 4 , data_size);
+		LoadData<unsigned int>(file, 4, data_size);
+		break;
 	case TYPE_LONGLONG:
-		LOAD(file, long long, 8 , data_size);
+		LoadData<long long>(file, 8, data_size);
+		break;
 	case TYPE_UNSIGNEDLONGLONG:
-		LOAD(file, unsigned long long, 8, data_size);
+		LoadData<unsigned long long>(file, 8, data_size);
+		break;
 	case TYPE_LONGDOUBLE:
 	case TYPE_DOUBLEPAIR:
 	case TYPE_LONGDOUBLEPAIR:

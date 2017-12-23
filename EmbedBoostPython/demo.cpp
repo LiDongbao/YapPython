@@ -1,19 +1,24 @@
 #include "stdafx.h"
-#include <vcruntime.h>
 #include <Python.h>
-#include <iostream>
+
 #include <boost\python.hpp>
 #include <boost\python\stl_iterator.hpp>
 #include <boost\python\list.hpp>
-#include "..\ReadFolderAllFiles\NiiReader.h"
 #include <boost\python\list.hpp>
+
+#include <iostream>
 #include <windows.h>
 #include <string>
 #include <stdlib.h>
 #include <mutex>
- 
+#include <vcruntime.h>
 #include <list>
 #include <vector>
+
+#include "..\ReadFolderAllFiles\INiiReader.h"
+#include <fstream>
+
+using namespace std;
 
 std::string ToMbs(const wchar_t * wcs)
 {
@@ -120,12 +125,7 @@ void ReadTxtFile()
 
 void loadDll()
 {
-	/*
-	D:\\test_data\\003_t2_tse_sag.nii
-	\\\\alg-cloud\\Public\\MRI Data\\MIDA\\MIDA_v1.0\\MIDA_v1_voxels\\MIDA_v1.nii
-	\\\\alg-cloud\\Public\\MRI Data\\QSM-GYLi\\bobinshi\\QSM_32bit.hdr
-	*/
-	auto _module = ::LoadLibrary(L"..\\x64\\Debug\\ReadFolderAllFiles.dll");
+	auto _module = ::LoadLibrary(L"..\\x64\\Debug\\ReadNiiFile.dll");
 	if (!_module)
 		return ;
 	auto get_func = (INiiReader*(*)())::GetProcAddress(_module, "GetNiiData");
@@ -443,6 +443,7 @@ int main()
 	{
 		std::cout << *(ptr++) << std::endl;
 	}
+	
 	std::system("pause");
 	return 1;
 }

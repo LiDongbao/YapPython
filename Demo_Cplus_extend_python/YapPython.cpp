@@ -81,37 +81,78 @@ public:
 		}
 	}
 
-	virtual void SetRefData(void *& roi_data,int32_t data_type) override 
+	virtual void SetRefData(void * ref_data, int32_t data_type, size_t dimension_count, size_t size[]) override 
 	{
-		assert(roi_data != nullptr);
-		_roi_data = std::shared_ptr<void>(roi_data);
-		_data_type = data_type;
+
+		if (ref_data == nullptr)
+		{
+			return;
+		}
+		_ref_data = ref_data;
+		switch (data_type)
+		{
+		case DataTypeInt:
+			_ref_data_list = CArray2Pylist(reinterpret_cast<int*>(ref_data), dimension_count, size);
+			break;
+		case DataTypeUnsignedInt:
+			_ref_data_list = CArray2Pylist(reinterpret_cast<unsigned int*>(ref_data), dimension_count, size);
+			break;
+		case DataTypeChar:
+			_ref_data_list = CArray2Pylist(reinterpret_cast<char*>(ref_data), dimension_count, size);
+			break;
+		case DataTypeUnsignedChar:
+			_ref_data_list = CArray2Pylist(reinterpret_cast<unsigned char*>(ref_data), dimension_count, size);
+			break;
+		case DataTypeShort:
+			_ref_data_list = CArray2Pylist(reinterpret_cast<short*>(ref_data), dimension_count, size);
+			break;
+		case DataTypeUnsignedShort:
+			_ref_data_list = CArray2Pylist(reinterpret_cast<unsigned short*>(ref_data), dimension_count, size);
+			break;
+		case DataTypeFloat:
+			_ref_data_list = CArray2Pylist(reinterpret_cast<float*>(ref_data), dimension_count, size);
+			break;
+		case DataTypeDouble:
+			_ref_data_list = CArray2Pylist(reinterpret_cast<double*>(ref_data), dimension_count, size);
+			break;
+		case DataTypeComplexFloat:
+			_ref_data_list = CArray2Pylist(reinterpret_cast<complex<float>*>(ref_data), dimension_count, size);
+			break;
+		case DataTypeComplexDouble:
+			_ref_data_list = CArray2Pylist(reinterpret_cast<complex<double>*>(ref_data), dimension_count, size);
+			break;
+		case DataTypeBool:
+			_ref_data_list = CArray2Pylist(reinterpret_cast<bool*>(ref_data), dimension_count, size);
+			break;
+		default:
+			break;
+		}
 	};
 
 	virtual void DeleteRefData() override
 	{
-		_data_type = DataUnknown;
-		_roi_data = nullptr;
+		_ref_data = nullptr;
 	}
 protected:
-	/*
+	
 	template<typename T>
-	void pylist2Array(const boostpy::object& iterable, T *& out_data, size_t size[])
+	void pylist2Array(const bpy::object& iterable, T *& out_data, size_t size)
 	{
-		T * source_data = std::vector<T>(boostpy::stl_input_iterator<T>(iterable),
-			boostpy::stl_input_iterator<T>()).data();
-		memcpy(out_data, source_data, (size_t)(size[0] * sizeof(T)));
-		// out_data = out_data + (size_t)(size[0] * sizeof(T));
+		auto tv = std::vector<T>(bpy::stl_input_iterator<T>(iterable),
+			bpy::stl_input_iterator<T>());
+		T * source_data = tv.data();
+		memcpy(reinterpret_cast<void*>(out_data), reinterpret_cast<void*>(source_data), (size_t)(size * sizeof(T)));
+		out_data += size;
 	}
 	template<>
-	void pylist2Array(const boostpy::object& iterable, bool *& out_data, size_t size[])
+	void pylist2Array(const bpy::object& iterable, bool *& out_data, size_t size)
 	{
-		for (size_t i = 0; i < size_t(boostpy::len(iterable)); ++i)
+		for (size_t i = 0; i < size; ++i)
 		{
-			*(out_data++) = boostpy::extract<bool>(iterable[i]);
+			*(out_data++) = bpy::extract<bool>(iterable[i]);
 		}
 	}
-	*/
+	
 
 	size_t GetTotalSize(size_t dimension_count, size_t size[])
 	{
@@ -129,7 +170,7 @@ protected:
 		size_t input_dimensions,T * data, OUT size_t &output_dimensions, 
 		size_t input_size[], OUT size_t output_size[],bool is_need_ref_data)
 	{
-		if (is_need_ref_data && _data_type == DataUnknown && _roi_data == nullptr)
+		if (is_need_ref_data && _ref_data == nullptr)
 		{
 			return nullptr;
 		}
@@ -146,26 +187,23 @@ protected:
 			// convert T* to python list
 			auto in_data_list = CArray2Pylist(data, input_dimensions, input_size);
 
-			bpy::list ref_data;
-			if (is_need_ref_data)
-				ref_data = CArray2Pylist(reinterpret_cast<T*>(_roi_data.get()), input_dimensions, input_size);
 			bpy::list return_list;
 			switch (input_dimensions)
 			{
 			case 1:
-				return_list = is_need_ref_data ? (bpy::extract<bpy::list>(func(in_data_list, ref_data, input_size[0]))) 
+				return_list = is_need_ref_data ? (bpy::extract<bpy::list>(func(in_data_list, _ref_data_list, input_size[0]))) 
 					: (bpy::extract<bpy::list>(func(in_data_list, input_size[0])));
 				break;
 			case 2:
-				return_list = is_need_ref_data ? (bpy::extract<bpy::list>(func(in_data_list, ref_data, input_size[0], input_size[1])))
+				return_list = is_need_ref_data ? (bpy::extract<bpy::list>(func(in_data_list, _ref_data_list, input_size[0], input_size[1])))
 					: (bpy::extract<bpy::list>(func(in_data_list, input_size[0], input_size[1])));
 				break;
 			case 3:
-				return_list = is_need_ref_data ? (bpy::extract<bpy::list>(func(in_data_list, ref_data, input_size[0],input_size[1],input_size[2])))
+				return_list = is_need_ref_data ? (bpy::extract<bpy::list>(func(in_data_list, _ref_data_list, input_size[0],input_size[1],input_size[2])))
 					: (bpy::extract<bpy::list>(func(in_data_list, input_size[0], input_size[1], input_size[2])));
 				break;
 			case 4:
-				return_list = is_need_ref_data ? (bpy::extract<bpy::list>(func(in_data_list, ref_data, input_size[0], input_size[1], input_size[2],input_size[3])))
+				return_list = is_need_ref_data ? (bpy::extract<bpy::list>(func(in_data_list, _ref_data_list, input_size[0], input_size[1], input_size[2],input_size[3])))
 					: (bpy::extract<bpy::list>(func(in_data_list, input_size[0], input_size[1], input_size[2], input_size[3])));
 				break;
 			default:
@@ -204,7 +242,7 @@ protected:
 	};
 
 	template<typename T>
-	bpy::list YapPythonImpl::CArray2Pylist(const T* data, size_t dimension_count, size_t size[])
+	bpy::list CArray2Pylist(const T* data, size_t dimension_count, size_t size[])
 	{
 		const T* p = data;
 		vector<size_t> reversed_size(dimension_count);
@@ -218,7 +256,7 @@ protected:
 
 	/*convert 1D array to python 2D list*/
 	template<typename T>
-	bpy::list YapPythonImpl::DoCArray2Pylist(const T*& data, size_t dimension_count, size_t size[])
+	bpy::list DoCArray2Pylist(const T*& data, size_t dimension_count, size_t size[])
 	{
 		bpy::list result;
 		if (dimension_count == 1)
@@ -239,7 +277,7 @@ protected:
 	};
 
 	template<typename T>
-	void YapPythonImpl::Pylist2CArray(const bpy::list& li, T* out_data, size_t dimension_count, size_t size[])
+	void Pylist2CArray(const bpy::list& li, T* out_data, size_t dimension_count, size_t size[])
 	{
 		T* p = out_data;
 		size_t * reversed_size = new size_t[4];
@@ -256,16 +294,17 @@ protected:
 	use function:[ pylist2Vector ] to convert pylist to vector, then memory allocate to c++ array.
 	*/
 	template<typename T>
-	void YapPythonImpl::DoPylist2CArray(const bpy::list& li, T*& out_data, size_t dim_count, size_t size[])
+	void DoPylist2CArray(const bpy::list& li, T*& out_data, size_t dim_count, size_t size[])
 	{
 		assert(out_data != nullptr);
 
 		if (dim_count == 1)
 		{
-			for (size_t i = 0; i < size[0]; ++i)
+			pylist2Array(li, out_data, size[0]);
+			/*for (size_t i = 0; i < size[0]; ++i)
 			{
 				*(out_data++) = bpy::extract<T>(li[i]);
-			}
+			}*/
 		}
 		else
 		{
@@ -280,12 +319,12 @@ protected:
 
 private:
 	//
-	std::shared_ptr<void> _roi_data;
-	int32_t _data_type;
+	void* _ref_data;
+	bpy::list _ref_data_list;
 };
 
 YapPythonImpl::YapPythonImpl() : 
-	_roi_data{ nullptr }, _data_type{ DataUnknown }
+	_ref_data{ nullptr }
 {
 	Py_Initialize();
 	if (!Py_IsInitialized())

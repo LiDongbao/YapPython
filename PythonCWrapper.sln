@@ -7,12 +7,14 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "YapPythonDll", "Demo_Cplus_
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "YapPythonUnitTest", "YapPythonUnitTest\YapPythonUnitTest.vcxproj", "{9BD05A32-70BA-4D93-B968-893FE2C7FB40}"
 	ProjectSection(ProjectDependencies) = postProject
+		{4F17F65C-F2FA-475C-8571-757186E2CE7F} = {4F17F65C-F2FA-475C-8571-757186E2CE7F}
 		{7950C388-A1A2-4AA6-A788-E0AF50EB1A32} = {7950C388-A1A2-4AA6-A788-E0AF50EB1A32}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "demo", "EmbedBoostPython\EmbedBoostPython.vcxproj", "{2F155A57-2663-4C17-848A-D523BE3BC36C}"
 	ProjectSection(ProjectDependencies) = postProject
 		{4F17F65C-F2FA-475C-8571-757186E2CE7F} = {4F17F65C-F2FA-475C-8571-757186E2CE7F}
+		{7950C388-A1A2-4AA6-A788-E0AF50EB1A32} = {7950C388-A1A2-4AA6-A788-E0AF50EB1A32}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "YapPythonTest", "YapPythonTest\YapPythonTest.vcxproj", "{FB017B45-FF58-4CC5-84A2-A4880E037052}"
@@ -21,7 +23,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "YapPythonTest", "YapPythonT
 		{7950C388-A1A2-4AA6-A788-E0AF50EB1A32} = {7950C388-A1A2-4AA6-A788-E0AF50EB1A32}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ReadFolderAllFiles", "ReadFolderAllFiles\ReadFolderAllFiles.vcxproj", "{4F17F65C-F2FA-475C-8571-757186E2CE7F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ReadNiiFile", "ReadFolderAllFiles\ReadFolderAllFiles.vcxproj", "{4F17F65C-F2FA-475C-8571-757186E2CE7F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

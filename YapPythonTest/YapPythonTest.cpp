@@ -4,8 +4,8 @@
 #include "stdafx.h"
 #include <iostream>
 #include "..\Demo_Cplus_extend_python\IYapPython.h"
+#include "..\ReadFolderAllFiles\INiiReader.h"
 #include <windows.h>
-#include "..\ReadFolderAllFiles\NiiReader.h"
 #include <vector>
 
 #ifndef OUT
@@ -16,24 +16,26 @@ using namespace std;
 
 INiiReader * LoadNiiDll()
 {
-	auto _module1 = ::LoadLibrary(L"..\\x64\\Debug\\ReadFolderAllFiles.dll");
-	if (!_module1)
+	auto _module = ::LoadLibrary(L"D:\\Projects\\Demo_Cplus_extend_python\\x64\\Release\\ReadNiiFile.dll");
+	if (!_module)
 	{
-		std::cout << "Error loading YapPythonDll.dll.\n";
+		std::cout << "Error loading ReadFolderAllFiles.dll.\n";
 		return nullptr;
 	}
-	auto get_func = (INiiReader*(*)())::GetProcAddress(_module1, "GetNiiData");
+	auto get_func = (INiiReader*(*)())::GetProcAddress(_module, "GetNiiData");
 	if (!get_func)
 	{
-		std::cout << "Cannot find GetYapPython() in YapPythonDLL.dll.\n";
+		::FreeLibrary(_module);
+		std::cout << "Cannot find GetYapPython() in ReadFolderAllFiles.dll.\n";
 		return nullptr;
 	}
+	std::cout << "sucess load ReadFolderAllFiles.dll" << std::endl;
 	return get_func();
 }
 
 IYapPython* LoadPythonDll()
 {
-	auto _module = ::LoadLibrary(L"..\\x64\\Debug\\YapPythonDll.dll");
+	auto _module = ::LoadLibrary(L"D:\\Projects\\Demo_Cplus_extend_python\\x64\\Debug\\YapPythonDll.dll");
 	if (!_module)
 	{
 		std::cout << "Error loading YapPythonDll.dll.\n";
@@ -43,17 +45,18 @@ IYapPython* LoadPythonDll()
 	auto get_yap_python_func = (IYapPython*(*)())::GetProcAddress(_module, "GetYapPython");
 	if (get_yap_python_func == nullptr)
 	{
+		::FreeLibrary(_module);
 		std::cout << "Cannot find GetYapPython() in YapPythonDLL.dll.\n";
 		return nullptr;
 	}
-
+	std::cout << "sucess load YapPythonDll.dll" << std::endl;
 	return get_yap_python_func();
 }
 
 void YapPythonTest()
 {
-	auto python = LoadPythonDll();
 	auto nii_reader = LoadNiiDll();
+	auto python = LoadPythonDll();
 	auto t1ce_data = nii_reader->ReadFile(L"D:\\test_data\\Brats17_2013_11_1_t1ce.nii");
 	auto roi_data = nii_reader->ReadFile(L"D:\\test_data\\Brats17_2013_11_1_seg.nii");
 
@@ -69,8 +72,8 @@ void YapPythonTest()
 	// auto out_data_3d = python->Process(L"..\\PythonScripts\\Py2C.py", L"ShowImage3d",
 	// DataTypeUnsignedShort, 3, data, output_dimensions, input_size, output_size);
 
-	python->SetRefData(roi_data, DataTypeUnsignedShort);
-	auto out_data = python->Process(L"..\\PythonScripts\\demo_test.py", L"test_radiomics",
+	python->SetRefData(roi_data, DataTypeUnsignedShort,3, input_size);
+	auto out_data = python->Process(L"D:\\Projects\\Demo_Cplus_extend_python\\PythonScripts\\demo_test.py", L"test_radiomics",
 		DataTypeUnsignedShort, 3, t1ce_data, output_dimensions, input_size, output_size,true);
 	python->DeleteRefData();
 	std::cout << "output data dimension: " << output_dimensions << std::endl;

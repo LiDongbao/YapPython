@@ -1,6 +1,7 @@
 // YapPythonUnitTest.cpp : Defines the entry point for the console application.
 //
 #include "stdafx.h"
+#pragma once
 #define BOOST_TEST_MODULE MyUnitTest
 
 #include <boost\test\unit_test.hpp>
@@ -12,7 +13,9 @@
 #include <windows.h>
 #include <time.h>
 
+
 namespace bstdata = boost::unit_test::data;
+
 struct  PerpareData
 {
 	PerpareData() : output_dimensions{0}
@@ -39,6 +42,8 @@ struct  PerpareData
 		return total_size;
 	}
 
+#pragma warning(push)
+#pragma warning(disable:4800)
 	template<typename T>
 	T * CreateData(size_t dimension_count, size_t input_size[])
 	{
@@ -71,6 +76,7 @@ struct  PerpareData
 
 		return input_data;
 	}
+#pragma warning(pop)
 
 	template<typename T>
 	T * GetReturnData(IYapPython &python, const wchar_t* module_name, const wchar_t* method_name, size_t input_dimensions,
@@ -194,7 +200,7 @@ BOOST_AUTO_TEST_CASE(test_ref_data_python)
 		L"test3d", input_dims, in_data, output_dimensions, input_size, output_size, true);
 	BOOST_TEST(out_data == (int*)nullptr);
 
-	python->SetRefData(ref_data, 1);
+	python->SetRefData(ref_data, DataTypeInt, input_dims, input_size);
 	auto out_data1 = GetReturnData< int >(*python, script_path,
 		L"test3d2image", input_dims, in_data, output_dimensions, input_size, output_size, true);
 	BOOST_TEST(out_data1 != (int*)nullptr);
