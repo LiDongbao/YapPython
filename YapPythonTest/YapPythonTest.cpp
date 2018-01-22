@@ -16,7 +16,7 @@ using namespace std;
 
 INiiReader * LoadNiiDll()
 {
-	auto _module = ::LoadLibrary(L"D:\\Projects\\Demo_Cplus_extend_python\\x64\\Release\\ReadNiiFile.dll");
+	auto _module = ::LoadLibrary(L"D:\\Projects\\Demo_Cplus_extend_python\\x64\\Debug\\ReadNiiFile.dll");
 	if (!_module)
 	{
 		std::cout << "Error loading ReadFolderAllFiles.dll.\n";
@@ -57,11 +57,13 @@ void YapPythonTest()
 {
 	auto nii_reader = LoadNiiDll();
 	auto python = LoadPythonDll();
-	auto t1ce_data = nii_reader->ReadFile(L"D:\\test_data\\Brats17_2013_11_1_t1ce.nii");
-	auto roi_data = nii_reader->ReadFile(L"D:\\test_data\\Brats17_2013_11_1_seg.nii");
+	auto t1ce_data = nii_reader->ReadFile(L"D:\\test_data\\MICCAI_BraTS17_Data_Training_for_TGuo_2017modified\\Brats17TrainingData\\test\\Brats17_TCIA_321_1\\Brats17_TCIA_321_1_flair.nii");
+	auto data_type = nii_reader->GetDataType();
+	auto roi_data = nii_reader->ReadFile(L"D:\\test_data\\MICCAI_BraTS17_Data_Training_for_TGuo_2017modified\\Brats17TrainingData\\test\\Brats17_TCIA_321_1\\Brats17_TCIA_321_1_seg.nii");
+	auto roi_type = nii_reader->GetDataType();
 
 	auto dimensions = reinterpret_cast<size_t*>(nii_reader->GetDimensions());
-
+	
 	size_t input_size[4] = { dimensions[0], dimensions[1], dimensions[2], dimensions[3] };
 	size_t output_dimensions = 0;
 	size_t output_size[10] = { 0 };
@@ -71,10 +73,9 @@ void YapPythonTest()
 	// 
 	// auto out_data_3d = python->Process(L"..\\PythonScripts\\Py2C.py", L"ShowImage3d",
 	// DataTypeUnsignedShort, 3, data, output_dimensions, input_size, output_size);
-
-	python->SetRefData(roi_data, DataTypeUnsignedShort,3, input_size);
+	python->SetRefData(roi_data, roi_type, 3, input_size); //DataTypeUnsignedShort
 	auto out_data = python->Process(L"D:\\Projects\\Demo_Cplus_extend_python\\PythonScripts\\demo_test.py", L"test_radiomics",
-		DataTypeUnsignedShort, 3, t1ce_data, output_dimensions, input_size, output_size,true);
+		data_type, DataTypeFloat, 3, t1ce_data, output_dimensions, input_size, output_size,true);
 	python->DeleteRefData();
 	std::cout << "output data dimension: " << output_dimensions << std::endl;
 }

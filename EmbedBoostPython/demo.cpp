@@ -1,11 +1,13 @@
 #include "stdafx.h"
 #include <Python.h>
 
+#include "..\ReadFolderAllFiles\INiiReader.h"
+
 #include <boost\python.hpp>
 #include <boost\python\stl_iterator.hpp>
 #include <boost\python\list.hpp>
 #include <boost\python\list.hpp>
-
+#include <boost/iterator/indirect_iterator.hpp>
 #include <iostream>
 #include <windows.h>
 #include <string>
@@ -14,11 +16,34 @@
 #include <vcruntime.h>
 #include <list>
 #include <vector>
-
-#include "..\ReadFolderAllFiles\INiiReader.h"
+#include <regex>
+#include <io.h>
 #include <fstream>
 
+#pragma warning(disable:4996)
+
 using namespace std;
+
+bool CheckSysBigOrLittleEndian()
+{
+	unsigned int i = 0x12345678;
+	cout << hex << i << endl;
+	cout << dec << i << endl;
+	unsigned char *p = (unsigned char*)&i; //将i的地址传给数组指针p，实际上p指向的地址是i在内存中存储的第一个字节，大端就是0x12，小端就是0x78
+	if ((*p == 0x78) && (*(p + 1) == 0x56))
+		return false;// little endian
+	else
+		return true;// big endian 
+}
+
+const wstring ToWC(const char *c)
+{
+	size_t cSize = strlen(c) + 1;
+	static wchar_t wc[1024];
+	mbstowcs_s(&cSize, wc, cSize, c, (size_t)1024);
+
+	return wstring(wc);
+}
 
 std::string ToMbs(const wchar_t * wcs)
 {
@@ -48,6 +73,13 @@ int runPythonScript()
 		bpy::list retList = bpy::extract<bpy::list>(getsomething());
 		*/
 
+		std::vector<int> v(10, 10);
+		// bpy::object get_iter = bpy::iterator<std::vector<int> >();
+		// bpy::object iter = get_iter(v);
+
+		bpy::list li(v.data());
+		// result(iter);
+
 		bpy::list outside_list;
 		bpy::list inside_list;
 		inside_list.append(1);
@@ -75,6 +107,31 @@ int runPythonScript()
 	Py_Finalize();
 	std::system("pause");
 	return 0;
+
+	//////////////////////////////////////////////////////////////////////////
+	Py_InitializeEx(0);
+	if (!Py_IsInitialized())
+	{
+		return 1;
+	}
+
+	// PyThreadState* state = Py_NewInterpreter();	/* start a new sub interpreter */
+	namespace bpy = boost::python;
+	bpy::object mainModule = bpy::import("__main__");
+	bpy::object mainNamespace = mainModule.attr("__dict__");
+	bpy::object a = bpy::eval("2**10", mainNamespace, mainNamespace);
+	bpy::object simple = bpy::exec_file("D:\\demoPython\\example.py", mainNamespace, mainNamespace);
+
+	// Py_EndInterpreter(state); /* end the 'state' labeled sub interpreter */
+	// Py_DECREF(state);
+
+	Py_DECREF(a.ptr());
+	Py_DECREF(simple.ptr());
+	// Py_XDECREF(mainModule.ptr());
+	Py_XDECREF(mainNamespace.ptr());
+	Py_DECREF(mainNamespace.ptr());
+	Py_Finalize();
+	return 1;
 }
 
 bool another_main(void)
@@ -145,11 +202,6 @@ void loadDll()
 	default:
 		break;
 	}
-}
-
-const int add(const int a, const int b) 
-{
-	return a + b;
 }
 
 void Item3Test()
@@ -403,22 +455,82 @@ private:
 	string * _string_ptr;
 };
 
-void RemoveName(string* st) {
-	delete st;
-}
-
 void DemoMutex() {
-	string * my_name = new string("Doron");
-	shared_ptr<string> name_ptr;
-	name_ptr.reset(my_name, RemoveName);
-
-	shared_ptr<string> name_ptr2(my_name, RemoveName);
-
 	mutex * use_mutex = new mutex();
 	use_mutex->try_lock();
 	use_mutex->unlock();
 	shared_ptr<Name>(new Name("Doron"));
 }
+
+
+void GetFiles(std::string file_path, std::vector<std::string>& folders, bool is_subfolder)
+{
+	assert(file_path.length() != 0);
+	if (file_path.length() >= _MAX_FNAME || int(file_path.find(' ')) != -1)
+		return;
+
+	if (file_path.rfind('\\') == (file_path.length() - 1))
+		file_path.pop_back();
+
+	long long   hFile = 0;
+	_finddata_t file_info;// file information struct.
+	string temp;
+
+	if ((hFile = _findfirst(((temp.assign(file_path)).append("/*")).c_str(), &file_info)) != -1)
+	{
+		do
+		{
+			if ((file_info.attrib & _A_SUBDIR))
+			{
+				if (strcmp(file_info.name, ".") != 0 && strcmp(file_info.name, "..") != 0)
+				{
+					if (is_subfolder)
+					{
+						GetFiles(temp.assign(file_path).append("//").append(file_info.name), folders, is_subfolder);
+					}
+				}
+			}
+			else
+			{
+				folders.push_back(((temp.assign(file_path)).append("//")).append(file_info.name));
+			}
+		} while (_findnext(hFile, &file_info) == 0);
+		_findclose(hFile);
+	}
+}
+
+
+class Base {
+public:
+	virtual ~Base();
+};
+
+Base::~Base() {
+
+};
+
+class Derived : public Base {
+public: 
+	Derived() : value{12} {};
+	~Derived() {};
+	int return_value(int& out_value) { 
+		int tempt = value;
+		out_value = tempt;
+		return value; 
+	}
+private:
+	int value;
+};
+
+class Derived2 : public Base
+{
+public:
+	Derived2() :my_value{100} {};
+	~Derived2() {};
+	int return_value() { return my_value; }
+private:
+	int my_value;
+};
 
 int main()
 {
@@ -434,16 +546,12 @@ int main()
 	// EffectiveC_Chapter3();
 	// DemoMutex();
 
-	vector<string> vec;
-	vec.push_back("C++");
-	vec.push_back("Java");
-	vec.push_back("PHP");
-	string * ptr = vec.data();
-	for (size_t i = 0; i < vec.size(); ++i)
-	{
-		std::cout << *(ptr++) << std::endl;
-	}
-	
+	using namespace std;
+	wstring cs(L"I hate you so much");
+	cs = L"I love you so much";
+	wcout << cs << endl;
 	std::system("pause");
+
 	return 1;
 }
+

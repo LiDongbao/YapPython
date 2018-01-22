@@ -1,6 +1,8 @@
 #pragma once
 #ifndef _INiiReader_H__
 #define _INiiReader_H__
+#include <stdint.h>
+#include <utility>
 
 /*
 the NIFTI-1 version head size must be 348 bytes. least unit size is 4 bytes.
@@ -12,7 +14,7 @@ struct Nii_v1_FileHeaderInfo
 	int32_t	sizeof_hdr;		//0B		4B		Size of the header.Must be 348 (bytes).
 	char	data_type[10];	//4B		10B		Not used; compatibility with analyze.
 	char	db_name[18];	//14B		18B		Not used; compatibility with analyze.
-	int32_t	extents;		//32B		4B		Not used; compatibility with analyze.
+	int32_t	extents;		//32B		4B		Not used; compatibality with analyze.
 	short	session_error;	//36B		2B		Not used; compatibility with analyze.
 	char	regular;		//38B		1B		Not used; compatibility with analyze.
 	char	dim_info;		//39B		1B		Encoding directions(phase, frequency, slice).
@@ -100,7 +102,6 @@ struct Nii_v2_FileHeaderInfo {
 	char	unused_str[15];	//525B		15B		Unused, to be padded with with zeroes.
 };
 
-
 struct INiiReader
 {
 	virtual void * ReadFile(const wchar_t* nii_path) = 0;
@@ -115,7 +116,6 @@ struct INiiReader
 
 	virtual std::pair<void *, Nii_v2_FileHeaderInfo*> ReadNiiV2(const wchar_t * file_path) = 0;
 };
-
 
 enum NiiVersion
 {

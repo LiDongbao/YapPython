@@ -77,13 +77,15 @@ def test1d(image, width):
 
 ## test for 2d
 def test2d(image, width, height):
-        # print('Invoking Method: [test2d].')
+        print('Invoking Method: [test2d].')
         # print('\tpython rang: ',image[0][0],'~', image[height-1][width-1],'\t\t\t\t',width,height)
+        pil_image = Image.fromarray(np.array(image))
+        pil_image.show()
         return [2, image, width, height]
 
 ## test for 3d
 def test3d(image, width, height, slice):
-        # print('Invoking Method: [test3d].')
+        print('Invoking Method: [test3d].')
         # print('\tpython rang: ',image[0][0][0],'~', image[slice-1][height-1][width-1],'\t\t\t\t',width,height,slice)
         return [3, image, width, height, slice]
 

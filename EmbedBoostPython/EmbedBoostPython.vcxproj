@@ -76,7 +76,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <LibraryPath>C:\boost\lib\x64;$(LibraryPath)</LibraryPath>
-    <IncludePath>C:\boost\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\boost\include;$(PYTHON_ROOT)\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>

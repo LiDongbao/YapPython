@@ -16,10 +16,8 @@ def test3d_2input(image1, image2, width,height,slice):
     return [3, image1,width,height,slice]
 
 
-def test_radiomics(image, roi, width,height,slice):
-    print('Invoking Method: [test_radiomics].')
-    image1 = sitk.GetImageFromArray(np.array(image))
-    image2 = sitk.GetImageFromArray(np.array(roi))
+def test_radiomics(image, roi, width, height, slice):
+    
     radiomics_parameter_path = r'C:\projects\pyradiomics\examples\exampleSettings\Params.yaml'
     extractor = featureextractor.RadiomicsFeaturesExtractor(radiomics_parameter_path)
     extractor.disableAllFeatures()
@@ -30,8 +28,20 @@ def test_radiomics(image, roi, width,height,slice):
     extractor.enableFeatureClassByName('ngtdm')
     extractor.enableFeatureClassByName('firstorder')
     extractor.enableFeatureClassByName('shape')
+    
+    print('Invoking Method: [test_radiomics].')
+    image1 = sitk.GetImageFromArray(np.array(image))
+    image2 = sitk.GetImageFromArray(np.array(roi))
     features = extractor.execute(image1,image2)
+    features.pop('general_info_BoundingBox');
+    features.pop('general_info_EnabledImageTypes');
+    features.pop('general_info_GeneralSettings');
+    features.pop('general_info_ImageHash');
+    features.pop('general_info_ImageSpacing');
+    features.pop('general_info_MaskHash');
+    features.pop('general_info_Version');
     for fn in features.keys():
         print("Compute %s : %s" %(fn,features[fn]))
-    # image = np.array(image)[0].tolist()
-    return [3, image, width, height, slice]
+    f_value = list(features.values())
+    f_size = len(f_value)
+    return [1, f_value, f_size]

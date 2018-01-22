@@ -9,7 +9,7 @@
 #define OUT
 #endif
 
-const int DataUnknown = 0x00000000;				///< unknown type
+const int DataTypeUnknown = 0x00000000;				///< unknown type
 const int DataTypeChar = 0x00000001;			///< char (1 byte)
 const int DataTypeUnsignedChar = 0x00000002;	///< unsigned char (1 byte)
 const int DataTypeShort = 0x00000004;			///< short (2 bytes)
@@ -60,10 +60,12 @@ namespace PyDataType {
 struct IYapPython
 {
 	virtual void* Process(const wchar_t* module_name, const wchar_t* method_name, int data_type,
+		int out_data_type, 
 		size_t input_dimensions, void * data, OUT size_t &output_dimensions,size_t input_size[], 
 		OUT size_t output_size[],bool is_need_ref_data=0) = 0;
 
 	virtual void SetRefData(void * roi_data, int32_t data_type, size_t dimension_count, size_t size[]) = 0;
+
 	virtual void DeleteRefData() = 0;
 };
 

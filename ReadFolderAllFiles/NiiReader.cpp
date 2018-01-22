@@ -6,35 +6,9 @@
 
 #include <assert.h>
 #include <complex>
+#include <memory>
 
 #pragma warning(disable:4996)
-
-template<typename T>
-void * NiiReader::LoadData(ifstream & file, size_t byte_count, size_t data_size)
-{
-	T * data;
-	try
-	{
-		data = new  T[data_size];
-	}
-	catch (const std::bad_alloc&)
-	{
-		return (void*)nullptr;
-	}
-	if (!file.read(reinterpret_cast<char*>(data), data_size* sizeof(T)))
-	{
-		delete[] data;
-		return (void*)nullptr;
-	}
-	else
-	{
-		if (!_is_system_endian_same_data)
-		{
-			SwapByteOrder(reinterpret_cast<void*>(data), byte_count, data_size);
-		}
-		return reinterpret_cast<void*>(data);
-	}
-}
 
 using namespace std;
 
@@ -63,15 +37,38 @@ std::string ToMbs(const wchar_t * wcs)
 }
 
 NiiReader::NiiReader()
-	: _is_system_endian_same_data{ false }, _data_type{ -1 }, _data_ptr{ nullptr }, _current_type{ TYPE_UNKNOWN }
+	: _is_system_endian_same_data{ false }, 
+	_data_type{ -1 }, 
+	_data_ptr{ nullptr }, 
+	_current_type{ TYPE_UNKNOWN }
 {
-	// _dimensions = { 1,1,1,1,1,1,1,1 };
+	for (size_t i = 0; i < 8; ++i)
+	{
+		_dimensions[i] = 1;
+	}
 	cout << "NiiReader Constructor" << endl;
 }
 
 NiiReader::~NiiReader()
 {
 	cout << "NiiReader destructor" << endl;
+}
+
+int NiiReader::GetFileVersion(const wchar_t * file_path)
+{
+	return 1;
+}
+
+std::pair<void *, Nii_v1_FileHeaderInfo*> NiiReader::ReadNiiV1(const wchar_t * file_path)
+{
+	throw "error";
+	return std::make_pair((void*)nullptr, new Nii_v1_FileHeaderInfo());
+}
+
+std::pair<void *, Nii_v2_FileHeaderInfo*> NiiReader::ReadNiiV2(const wchar_t * file_path)
+{
+	throw "error";
+	return std::make_pair((void*)nullptr, new Nii_v2_FileHeaderInfo());
 }
 
 void* NiiReader::ReadFile(const wchar_t* nii_path)
@@ -86,13 +83,15 @@ void* NiiReader::ReadFile(const wchar_t* nii_path)
 	try
 	{
 		ifstream file(nii_path, ios::binary);
+		if (!file.good())
+			return (void*)nullptr;
 		// make sure the int size=4 and double & longlong & int64_t=8;
 		assert(sizeof(int) == 4 && sizeof(long long) == 8);
 
 		// Check file version and check the data is or not same as system endian.
 		switch (CheckVersion(file))
 		{
-		case VERSION_1:///version NIFTI-1
+		case VERSION_1:/// version NIFTI-1
 		{
 			Nii_v1_FileHeaderInfo v1_header_info;
 			auto header_size = sizeof(Nii_v1_FileHeaderInfo);
@@ -124,10 +123,11 @@ void* NiiReader::ReadFile(const wchar_t* nii_path)
 				return nullptr;
 			// read image data
 			data = ReadData(file, v1_header_info.datatype);
+			_current_type = NiiDataType(v1_header_info.datatype);
 			return data;
 		}
 			break;
-		case VERSION_2://version NIFTI-2
+		case VERSION_2:/// version NIFTI-2
 		{
 			Nii_v2_FileHeaderInfo v2_header_info;
 			if (!file.read(reinterpret_cast<char*>(&v2_header_info), sizeof(Nii_v2_FileHeaderInfo) - 4)) //NIFTI-2 head size is 540, but Nii_v2_FileHeaderInfo size is 544.
@@ -157,6 +157,7 @@ void* NiiReader::ReadFile(const wchar_t* nii_path)
 				return nullptr;
 			// read image data
 			data = ReadData(file, v2_header_info.data_type);
+			_current_type = NiiDataType(v2_header_info.data_type);
 			return data;
 		}
 			break;
@@ -412,49 +413,35 @@ void * NiiReader::ReadData(ifstream &file, short datatype)
 	switch (datatype)
 	{
 	case TYPE_BOOL:
-		LoadData<bool>(file, 1 , data_size);
-		break;
+		return LoadData<bool>(file, 1 , data_size);
 	case TYPE_UNSIGNEDCHAR:
-		LoadData<unsigned char>(file, 1, data_size);
-		break;
+		return LoadData<unsigned char>(file, 1, data_size);
 	case TYPE_SHORT:
-		LoadData<short>(file, 2, data_size);
-		break;
+		return  LoadData<short>(file, 2, data_size);
 	case TYPE_INT:
-		LoadData<int>(file, 4, data_size);
-		break;
+		return LoadData<int>(file, 4, data_size);
 	case TYPE_FLOAT:
-		LoadData<float>(file, 4, data_size);
-		break;
+		return LoadData<float>(file, 4, data_size);
 	case TYPE_COMPLEX:
-		LoadData<complex<float>>(file, 4, data_size * 2);
-		break;
+		return LoadData<complex<float>>(file, 4, data_size * 2);
 	case TYPE_DOUBLE:
-		LoadData<double>(file, 8, data_size);
-		break;
+		return LoadData<double>(file, 8, data_size);
 	case TYPE_RGB:
 		// rgb & rgba use unsigned char to store，虽然rgb是3字节，
 		// 但是因为在_dimensions中已经保存了数据的rgb值信息，所以不许需要做特殊处理
-		LoadData<unsigned char>(file, 1, data_size);
-		break;
+		return LoadData<unsigned char>(file, 1, data_size);
 	case TYPE_RGBA:
-		LoadData<unsigned char>(file, 1, data_size);
-		break;
+		return LoadData<unsigned char>(file, 1, data_size);
 	case TYPE_CHAR:
-		LoadData<char>(file, 1, data_size);
-		break;
+		return LoadData<char>(file, 1, data_size);
 	case TYPE_UNSIGNEDSHORT:
-		LoadData<unsigned short>(file, 2, data_size);
-		break;
+		return LoadData<unsigned short>(file, 2, data_size);
 	case TYPE_UNSIGNEDINT:
-		LoadData<unsigned int>(file, 4, data_size);
-		break;
+		return LoadData<unsigned int>(file, 4, data_size);
 	case TYPE_LONGLONG:
-		LoadData<long long>(file, 8, data_size);
-		break;
+		return LoadData<long long>(file, 8, data_size);
 	case TYPE_UNSIGNEDLONGLONG:
-		LoadData<unsigned long long>(file, 8, data_size);
-		break;
+		return LoadData<unsigned long long>(file, 8, data_size);
 	case TYPE_LONGDOUBLE:
 	case TYPE_DOUBLEPAIR:
 	case TYPE_LONGDOUBLEPAIR:
@@ -463,6 +450,7 @@ void * NiiReader::ReadData(ifstream &file, short datatype)
 	default:
 		return (void*)nullptr;
 	}
+	return (void*)nullptr;
 }
 
 int64_t * NiiReader::GetDimensions()
@@ -491,3 +479,52 @@ INiiReader& NiiReader::GetInstance()
 	return *s_instance;
 }
 
+
+void NiiReader::SwapByteOrder(void * data, size_t byte_count)
+{
+	auto buffer = reinterpret_cast<char*>(data);
+	char temp;
+	for (unsigned int i = 0; i < byte_count / 2; ++i)
+	{
+		temp = buffer[i];
+		buffer[i] = buffer[byte_count - 1 - i];
+		buffer[byte_count - 1 - i] = temp;
+	}
+}
+
+void NiiReader::SwapByteOrder(void * data, size_t element_size, size_t array_size)
+{
+	if (element_size == 1)
+		return;
+	for (size_t i = 0; i < array_size; ++i)
+	{
+		SwapByteOrder(reinterpret_cast<char*>(data) + i * element_size, element_size);
+	}
+}
+
+template<typename T>
+void * NiiReader::LoadData(ifstream & file, size_t byte_count, size_t data_size)
+{
+	T * data;
+	try
+	{
+		data = new  T[data_size];
+	}
+	catch (const std::bad_alloc&)
+	{
+		return (void*)nullptr;
+	}
+	if (!file.read(reinterpret_cast<char*>(data), data_size* sizeof(T)))
+	{
+		delete[] data;
+		return (void*)nullptr;
+	}
+	else
+	{
+		if (!_is_system_endian_same_data)
+		{
+			SwapByteOrder(reinterpret_cast<void*>(data), byte_count, data_size);
+		}
+		return reinterpret_cast<void*>(data);
+	}
+}
